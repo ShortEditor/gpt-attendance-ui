@@ -9045,7 +9045,9 @@
 
             // Collect all lab subjects assigned to this faculty
             const labCodes = Object.keys(FACULTY_MAP).filter(code => {
-                return FACULTY_MAP[code] === currentUser && getSubjectType(code) === 'Lab';
+                // Subject type is stored as 'Practical' in Firestore (admin dropdown value)
+                const t = getSubjectType(code).toLowerCase();
+                return FACULTY_MAP[code] === currentUser && (t === 'practical' || t === 'lab');
             });
 
             if (labCodes.length === 0) {
