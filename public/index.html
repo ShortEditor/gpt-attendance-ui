@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -198,6 +198,22 @@
             display: flex;
             align-items: center;
             gap: 5px;
+        }
+
+        /* ── EC Time Picker Input Wrapper ── */
+        .ec-time-input-wrap {
+            position: relative;
+            display: block;
+        }
+
+        .ec-time-clock-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 1;
         }
 
         .period-checkbox input {
@@ -625,6 +641,32 @@
 
         /* ───────────────────────────────────────────────────────────── */
 
+        /* ── Mark Input UX ─────────────────────────────────────────────── */
+        .mark-input {
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 6px;
+            color: #000;
+            font-size: 13px;
+        }
+
+        .mark-input::placeholder {
+            color: #aaa;
+        }
+
+        .mark-input:focus {
+            border: 2px solid #4CAF50;
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        .mark-input.invalid {
+            border: 2px solid red;
+        }
+
+        /* ───────────────────────────────────────────────────────────── */
+
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -793,71 +835,73 @@
                     </div>
 
 
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Attendance Mode</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="modeTimeTable" name="attMode" value="timetable" checked
-                                onchange="changeMode()">
-                            <label for="modeTimeTable">As Per Timetable</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="modeOther" name="attMode" value="other" onchange="changeMode()">
-                            <label for="modeOther">Class Work Adjustment</label>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label>Attendance Mode</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="modeTimeTable" name="attMode" value="timetable" checked
+                                    onchange="changeMode()">
+                                <label for="modeTimeTable">As Per Timetable</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="modeOther" name="attMode" value="other" onchange="changeMode()">
+                                <label for="modeOther">Class Work Adjustment</label>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="timetableMode">
-                    <div class="form-grid">
+                    <div id="timetableMode">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Period</label>
+                                <select id="period" disabled onchange="showSubject()">
+                                    <option value="">Select Period</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="otherMode" class="hidden">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Subject</label>
+                                <select id="otherSubject" onchange="clearAttendanceDisplay()">
+                                    <option value="">Select Subject</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="form-group">
-                            <label>Period</label>
-                            <select id="period" disabled onchange="showSubject()">
-                                <option value="">Select Period</option>
-                            </select>
+                            <label>Select Periods (Check boxes)</label>
+                            <div class="period-checkboxes">
+                                <div class="period-checkbox"><input type="checkbox" id="op1" value="1"
+                                        onchange="clearAttendanceDisplay()"><label for="op1">P1</label></div>
+                                <div class="period-checkbox"><input type="checkbox" id="op2" value="2"
+                                        onchange="clearAttendanceDisplay()"><label for="op2">P2</label></div>
+                                <div class="period-checkbox"><input type="checkbox" id="op3" value="3"
+                                        onchange="clearAttendanceDisplay()"><label for="op3">P3</label></div>
+                                <div class="period-checkbox"><input type="checkbox" id="op4" value="4"
+                                        onchange="clearAttendanceDisplay()"><label for="op4">P4</label></div>
+                                <div class="period-checkbox"><input type="checkbox" id="op5" value="5"
+                                        onchange="clearAttendanceDisplay()"><label for="op5">P5</label></div>
+                                <div class="period-checkbox"><input type="checkbox" id="op6" value="6"
+                                        onchange="clearAttendanceDisplay()"><label for="op6">P6</label></div>
+                                <div class="period-checkbox"><input type="checkbox" id="op7" value="7"
+                                        onchange="clearAttendanceDisplay()"><label for="op7">P7</label></div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="otherMode" class="hidden">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Subject</label>
-                            <select id="otherSubject" onchange="clearAttendanceDisplay()">
-                                <option value="">Select Subject</option>
-                            </select>
-                        </div>
+                    <div id="info" class="info-box hidden"></div>
+                    <div id="warningBox" class="warning-box hidden"></div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                        <button class="btn btn-primary" onclick="loadStudents()">📝 Load Students</button>
+                        <button class="btn btn-secondary" onclick="loadEditStudentsShared()"
+                            style="background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%); color: white;">✏️ Edit
+                            Attendance</button>
+                        <button class="btn btn-secondary" onclick="loadTopicEditMode()"
+                            style="background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); color: white;">📋 Edit
+                            Topic</button>
                     </div>
-                    <div class="form-group">
-                        <label>Select Periods (Check boxes)</label>
-                        <div class="period-checkboxes">
-                            <div class="period-checkbox"><input type="checkbox" id="op1" value="1"
-                                    onchange="clearAttendanceDisplay()"><label for="op1">P1</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="op2" value="2"
-                                    onchange="clearAttendanceDisplay()"><label for="op2">P2</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="op3" value="3"
-                                    onchange="clearAttendanceDisplay()"><label for="op3">P3</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="op4" value="4"
-                                    onchange="clearAttendanceDisplay()"><label for="op4">P4</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="op5" value="5"
-                                    onchange="clearAttendanceDisplay()"><label for="op5">P5</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="op6" value="6"
-                                    onchange="clearAttendanceDisplay()"><label for="op6">P6</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="op7" value="7"
-                                    onchange="clearAttendanceDisplay()"><label for="op7">P7</label></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="info" class="info-box hidden"></div>
-                <div id="warningBox" class="warning-box hidden"></div>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <button class="btn btn-primary" onclick="loadStudents()">📝 Load Students</button>
-                    <button class="btn btn-secondary" onclick="loadEditStudentsShared()"
-                        style="background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%); color: white;">✏️ Edit Attendance</button>
-                    <button class="btn btn-secondary" onclick="loadTopicEditMode()"
-                        style="background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); color: white;">📋 Edit Topic</button>
-                </div>
 
                 </div><!-- end attDateSection -->
 
@@ -935,12 +979,16 @@
                 <div id="topicEditArea" class="hidden" style="margin-top: 30px;">
                     <h2 style="color:#2a5298;margin-bottom:15px;">📋 Edit Topic</h2>
                     <div class="info-box" id="topicEditInfo"></div>
-                    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:20px;margin-top:14px;">
+                    <div
+                        style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:20px;margin-top:14px;">
                         <div id="topicEditCurrentBlock" style="display:none;margin-bottom:14px;">
                             <div style="font-weight:600;color:#166534;margin-bottom:4px;">✅ Current Topic:</div>
-                            <div id="topicEditCurrent" style="background:white;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:14px;color:#333;"></div>
+                            <div id="topicEditCurrent"
+                                style="background:white;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:14px;color:#333;">
+                            </div>
                         </div>
-                        <label style="font-weight:600;color:#166534;display:block;margin-bottom:6px;">✏️ Edit Topic:</label>
+                        <label style="font-weight:600;color:#166534;display:block;margin-bottom:6px;">✏️ Edit
+                            Topic:</label>
                         <div style="display:flex;gap:8px;align-items:flex-start;">
                             <textarea id="topicEditInput" maxlength="120" rows="3"
                                 style="flex:1;padding:10px;border:2px solid #86efac;border-radius:8px;font-size:14px;font-family:inherit;resize:none;"
@@ -950,7 +998,8 @@
                                 style="padding:10px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:8px;cursor:pointer;font-size:18px;flex-shrink:0;"
                                 title="Voice Input">🎤</button>
                         </div>
-                        <div style="font-size:12px;color:#6b7280;margin-top:4px;"><span id="topicEditCount">0</span> / 120 characters</div>
+                        <div style="font-size:12px;color:#6b7280;margin-top:4px;"><span id="topicEditCount">0</span> /
+                            120 characters</div>
                     </div>
                     <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
                         <button class="btn btn-success" onclick="saveTopicFromEdit()">💾 Save Topic</button>
@@ -963,13 +1012,17 @@
             <!-- LOGBOOK TAB (Faculty only) -->
             <div id="logbook" class="tab-content">
                 <h2 style="color:#2a5298;margin-bottom:6px;">📋 Topic Logbook</h2>
-                <p style="color:#888;font-size:13px;margin-bottom:20px;">Generate and download your topic logbook for any subject and date range.</p>
+                <p style="color:#888;font-size:13px;margin-bottom:20px;">Generate and download your topic logbook for
+                    any subject and date range.</p>
 
-                <div style="background:#f8f9fa;border-radius:12px;padding:20px;border:1px solid #e0e0e0;margin-bottom:20px;">
+                <div
+                    style="background:#f8f9fa;border-radius:12px;padding:20px;border:1px solid #e0e0e0;margin-bottom:20px;">
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Subject</label>
-                            <select id="logbookSubject" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;" onchange="clearLogbookPreview()">
+                            <select id="logbookSubject"
+                                style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;"
+                                onchange="clearLogbookPreview()">
                                 <option value="">-- Select Subject --</option>
                             </select>
                         </div>
@@ -980,19 +1033,18 @@
                         </div>
                         <div class="form-group">
                             <label>From Date</label>
-                            <input type="date" id="logbookFrom"
-                                onchange="clearLogbookPreview()"
+                            <input type="date" id="logbookFrom" onchange="clearLogbookPreview()"
                                 style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;">
                         </div>
                         <div class="form-group">
                             <label>To Date</label>
-                            <input type="date" id="logbookTo"
-                                onchange="clearLogbookPreview()"
+                            <input type="date" id="logbookTo" onchange="clearLogbookPreview()"
                                 style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;">
                         </div>
                     </div>
 
-                    <div id="logbookPreview" style="display:none;background:linear-gradient(135deg,#e0f2fe,#f0fdf4);border-radius:8px;padding:14px;margin-top:14px;border:1px solid #bae6fd;">
+                    <div id="logbookPreview"
+                        style="display:none;background:linear-gradient(135deg,#e0f2fe,#f0fdf4);border-radius:8px;padding:14px;margin-top:14px;border:1px solid #bae6fd;">
                         <div style="font-weight:700;color:#0369a1;margin-bottom:6px;">📊 Preview</div>
                         <div style="font-size:13px;color:#555;" id="logbookPreviewText"></div>
                     </div>
@@ -1015,11 +1067,13 @@
             <div id="extraclass" class="tab-content">
                 <h2 style="color:#2a5298;margin-bottom:20px;">📚 Extra Class Recording</h2>
                 <div class="info-box" style="margin-bottom:20px;">
-                    Record classes held outside the regular timetable — before/after college on working days, or on holidays.
+                    Record classes held outside the regular timetable — before/after college on working days, or on
+                    holidays.
                     <strong>No attendance needed</strong> — only topics are recorded.
                 </div>
 
-                <div style="background:#f8f9fa;border-radius:12px;padding:20px;border:1px solid #e0e0e0;margin-bottom:20px;">
+                <div
+                    style="background:#f8f9fa;border-radius:12px;padding:20px;border:1px solid #e0e0e0;margin-bottom:20px;">
 
                     <!-- Row 1: Date + Day-type badge -->
                     <div class="form-grid">
@@ -1030,7 +1084,9 @@
                         </div>
                         <div class="form-group" style="justify-content:flex-end;">
                             <label>&nbsp;</label>
-                            <div id="ecDayBadge" style="display:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:14px;text-align:center;"></div>
+                            <div id="ecDayBadge"
+                                style="display:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:14px;text-align:center;">
+                            </div>
                         </div>
                     </div>
 
@@ -1063,18 +1119,21 @@
                     </div>
 
                     <!-- Working Day section -->
-                    <div id="ecWorkingDaySection" style="display:none;margin-top:16px;padding:16px;background:#e8f5e9;border-radius:10px;border:1px solid #a5d6a7;">
+                    <div id="ecWorkingDaySection"
+                        style="display:none;margin-top:16px;padding:16px;background:#e8f5e9;border-radius:10px;border:1px solid #a5d6a7;">
                         <h4 style="color:#1b5e20;margin-bottom:12px;">📅 Working Day Extra Class</h4>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Session</label>
                                 <div class="radio-group">
                                     <div class="radio-option">
-                                        <input type="radio" id="ecFN" name="ecSession" value="FN" checked onchange="ecApplySessionDefaults()">
+                                        <input type="radio" id="ecFN" name="ecSession" value="FN" checked
+                                            onchange="ecApplySessionDefaults()">
                                         <label for="ecFN">FN</label>
                                     </div>
                                     <div class="radio-option">
-                                        <input type="radio" id="ecAN" name="ecSession" value="AN" onchange="ecApplySessionDefaults()">
+                                        <input type="radio" id="ecAN" name="ecSession" value="AN"
+                                            onchange="ecApplySessionDefaults()">
                                         <label for="ecAN">AN</label>
                                     </div>
                                 </div>
@@ -1082,43 +1141,54 @@
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>From Time (e.g. 8:30)</label>
-                                <input type="text" id="ecTimeFrom" placeholder="e.g. 8:30"
-                                    style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
+                                <label>From Time</label>
+                                <div class="ec-time-input-wrap" onclick="openTimePicker('ecTimeFrom')">
+                                    <span class="ec-time-clock-icon">🕐</span>
+                                    <input type="text" id="ecTimeFrom" readonly placeholder="Tap to set time"
+                                        style="padding:10px 10px 10px 36px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;cursor:pointer;background:#fff;">
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label>To Time (e.g. 9:30)</label>
-                                <input type="text" id="ecTimeTo" placeholder="e.g. 9:30"
-                                    style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
+                                <label>To Time</label>
+                                <div class="ec-time-input-wrap" onclick="openTimePicker('ecTimeTo')">
+                                    <span class="ec-time-clock-icon">🕐</span>
+                                    <input type="text" id="ecTimeTo" readonly placeholder="Tap to set time"
+                                        style="padding:10px 10px 10px 36px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;cursor:pointer;background:#fff;">
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Number of Periods</label>
-                                <select id="ecWdPeriods"
-                                    style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
-                                    <option value="1">1 Period</option>
-                                    <option value="2">2 Periods</option>
-                                </select>
-                            </div>
+                        </div>
+                        <!-- Slot status box -->
+                        <div id="ecStatusBox"
+                            style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;">
                         </div>
                     </div>
 
                     <!-- Holiday section -->
-                    <div id="ecHolidaySection" style="display:none;margin-top:16px;padding:16px;background:#fff3e0;border-radius:10px;border:1px solid #ffcc80;">
+                    <div id="ecHolidaySection"
+                        style="display:none;margin-top:16px;padding:16px;background:#fff3e0;border-radius:10px;border:1px solid #ffcc80;">
                         <h4 style="color:#e65100;margin-bottom:12px;">🏖️ Holiday Extra Class — Select Periods</h4>
                         <div class="period-checkboxes" style="gap:20px;">
-                            <div class="period-checkbox"><input type="checkbox" id="echP1" value="1"><label for="echP1" style="font-weight:600;">P1</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="echP2" value="2"><label for="echP2" style="font-weight:600;">P2</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="echP3" value="3"><label for="echP3" style="font-weight:600;">P3</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="echP4" value="4"><label for="echP4" style="font-weight:600;">P4</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="echP5" value="5"><label for="echP5" style="font-weight:600;">P5</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="echP6" value="6"><label for="echP6" style="font-weight:600;">P6</label></div>
-                            <div class="period-checkbox"><input type="checkbox" id="echP7" value="7"><label for="echP7" style="font-weight:600;">P7</label></div>
+                            <div class="period-checkbox"><input type="checkbox" id="echP1" value="1"><label for="echP1"
+                                    style="font-weight:600;">P1</label></div>
+                            <div class="period-checkbox"><input type="checkbox" id="echP2" value="2"><label for="echP2"
+                                    style="font-weight:600;">P2</label></div>
+                            <div class="period-checkbox"><input type="checkbox" id="echP3" value="3"><label for="echP3"
+                                    style="font-weight:600;">P3</label></div>
+                            <div class="period-checkbox"><input type="checkbox" id="echP4" value="4"><label for="echP4"
+                                    style="font-weight:600;">P4</label></div>
+                            <div class="period-checkbox"><input type="checkbox" id="echP5" value="5"><label for="echP5"
+                                    style="font-weight:600;">P5</label></div>
+                            <div class="period-checkbox"><input type="checkbox" id="echP6" value="6"><label for="echP6"
+                                    style="font-weight:600;">P6</label></div>
+                            <div class="period-checkbox"><input type="checkbox" id="echP7" value="7"><label for="echP7"
+                                    style="font-weight:600;">P7</label></div>
                         </div>
                     </div>
 
                     <!-- Topic input -->
                     <div style="margin-top:18px;">
-                        <label style="font-weight:600;color:#333;display:block;margin-bottom:8px;">Topics Covered</label>
+                        <label style="font-weight:600;color:#333;display:block;margin-bottom:8px;">Topics
+                            Covered</label>
                         <div style="display:flex;gap:8px;align-items:flex-start;">
                             <textarea id="ecTopic" rows="3" maxlength="300"
                                 style="flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;resize:vertical;"
@@ -1127,14 +1197,58 @@
                             <button onclick="startVoiceInput('ecTopic','ecMicBtn')" id="ecMicBtn"
                                 style="padding:10px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:8px;cursor:pointer;font-size:18px;flex-shrink:0;">🎤</button>
                         </div>
-                        <div style="text-align:right;font-size:11px;color:#999;margin-top:2px;"><span id="ecTopicCount">0</span>/300</div>
+                        <div style="text-align:right;font-size:11px;color:#999;margin-top:2px;"><span
+                                id="ecTopicCount">0</span>/300</div>
                     </div>
 
                     <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                         <button class="btn btn-success" onclick="saveExtraClass()">💾 Save Extra Class</button>
                         <button class="btn btn-secondary" onclick="initExtraClassTab()">↺ Reset</button>
                     </div>
-                    <div id="ecMsg" style="display:none;margin-top:14px;padding:12px;border-radius:8px;font-weight:600;"></div>
+                    <div id="ecMsg"
+                        style="display:none;margin-top:14px;padding:12px;border-radius:8px;font-weight:600;"></div>
+                </div>
+
+                <!-- ===== 12-HR TIME PICKER MODAL ===== -->
+                <div id="ecTimePickerOverlay" onclick="closeTimePicker()"
+                    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;">
+                </div>
+                <div id="ecTimePickerModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9001;
+                       background:#fff;border-radius:18px;padding:24px 20px 20px;width:310px;max-width:95vw;
+                       box-shadow:0 8px 40px rgba(0,0,0,.3);font-family:inherit;">
+                    <div style="text-align:center;font-weight:700;font-size:16px;color:#2a5298;margin-bottom:18px;"
+                        id="ecTpTitle">Select Time</div>
+                    <!-- Clock face -->
+                    <div style="position:relative;width:220px;height:220px;margin:0 auto 18px;">
+                        <canvas id="ecClockCanvas" width="220" height="220" style="cursor:pointer;"
+                            onmousedown="ecClockDown(event)" onmousemove="ecClockMove(event)"
+                            onmouseup="ecClockUp(event)" ontouchstart="ecClockTouchStart(event)"
+                            ontouchmove="ecClockTouchMove(event)" ontouchend="ecClockTouchEnd(event)"></canvas>
+                    </div>
+                    <!-- AM/PM + digit display -->
+                    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px;">
+                        <div style="font-size:36px;font-weight:800;color:#2a5298;letter-spacing:2px;" id="ecTpDisplay">
+                            12:00</div>
+                        <div style="display:flex;flex-direction:column;gap:5px;">
+                            <button id="ecTpAM" onclick="ecSetAmPm('AM')"
+                                style="padding:5px 12px;border:2px solid #2a5298;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px;">AM</button>
+                            <button id="ecTpPM" onclick="ecSetAmPm('PM')"
+                                style="padding:5px 12px;border:2px solid #2a5298;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px;">PM</button>
+                        </div>
+                    </div>
+                    <!-- Hour / Minute toggle -->
+                    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">
+                        <button id="ecTpHourBtn" onclick="ecTpSetMode('H')"
+                            style="flex:1;padding:8px;border-radius:8px;border:2px solid #2a5298;font-weight:700;cursor:pointer;font-size:14px;">Hour</button>
+                        <button id="ecTpMinBtn" onclick="ecTpSetMode('M')"
+                            style="flex:1;padding:8px;border-radius:8px;border:2px solid #ccc;font-weight:700;cursor:pointer;font-size:14px;">Minute</button>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button onclick="closeTimePicker()"
+                            style="flex:1;padding:10px;border-radius:8px;border:1px solid #ccc;cursor:pointer;font-size:14px;">Cancel</button>
+                        <button onclick="confirmTimePicker()"
+                            style="flex:1;padding:10px;border-radius:8px;background:#2a5298;color:#fff;border:none;cursor:pointer;font-weight:700;font-size:14px;">OK</button>
+                    </div>
                 </div>
             </div>
 
@@ -1703,60 +1817,178 @@
             <!-- LAB ASSESSMENT TAB (Faculty) -->
             <div id="labassessment" class="tab-content">
                 <h2 style="color:#2a5298;margin-bottom:6px;">🧪 Lab Assessment</h2>
-                <p style="color:#888;font-size:13px;margin-bottom:20px;">Generate and download Excel for lab experiments per student.</p>
+                <p style="color:#888;font-size:13px;margin-bottom:16px;">Generate and download Excel for lab assessment
+                    marks per student.</p>
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Lab Subject</label>
-                        <select id="labSubjectSel" onchange="onLabSubjectChange()">
-                            <option value="">Select Lab Subject</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Academic Year (A.Y)</label>
-                        <select id="labAcadYear">
-                            <option value="">Select A.Y.</option>
-                            <option value="2023-2024">2023-2024</option>
-                            <option value="2024-2025">2024-2025</option>
-                            <option value="2025-2026">2025-2026</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Number of Experiments (1–40)</label>
-                        <input type="number" id="labTotalExp" value="10" min="1" max="40" placeholder="e.g. 10">
-                    </div>
+                <!-- Inner sub-tabs SM / PM -->
+                <div style="display:flex;gap:0;border-bottom:2px solid #ddd;margin-bottom:20px;">
+                    <button id="labInnerTab_SM" onclick="switchLabInnerTab('SM')"
+                        style="padding:9px 24px;border:none;background:#667eea;color:white;font-weight:700;font-size:13px;cursor:pointer;border-radius:6px 6px 0 0;margin-right:4px;transition:all 0.2s;">
+                        📋 SM (40)
+                    </button>
+                    <button id="labInnerTab_PM" onclick="switchLabInnerTab('PM')"
+                        style="padding:9px 24px;border:none;background:#e0e0e0;color:#555;font-weight:600;font-size:13px;cursor:pointer;border-radius:6px 6px 0 0;margin-right:4px;transition:all 0.2s;">
+                        🧪 PM (60)
+                    </button>
                 </div>
 
-                <!-- Selected lab info -->
-                <div id="labInfoBox" class="info-box hidden" style="margin-bottom:16px;"></div>
-
-                <!-- Load Students button -->
-                <button class="btn btn-primary" onclick="loadLabStudents()">Load Students</button>
-
-                <!-- Students table =>  avg mark inputs -->
-                <div id="labStudentSection" class="hidden" style="margin-top:24px;">
-                    <h3 style="color:#2a5298;margin-bottom:12px;">📋 Students — Enter Average Marks</h3>
-                    <p style="color:#888;font-size:12px;margin-bottom:10px;">Enter the average mark (0–20) per student. Smart variation will be applied per experiment.</p>
-                    <div style="overflow-x:auto;">
-                        <table style="width:100%;border-collapse:collapse;background:white;font-size:13px;">
-                            <thead>
-                                <tr style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
-                                    <th style="padding:10px 8px;border:1px solid #ddd;text-align:center;">S.No</th>
-                                    <th style="padding:10px 8px;border:1px solid #ddd;text-align:left;">PIN</th>
-                                    <th style="padding:10px 8px;border:1px solid #ddd;text-align:left;">Name</th>
-                                    <th style="padding:10px 8px;border:1px solid #ddd;text-align:center;">Avg Marks (0–20)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="labStudentTableBody"></tbody>
-                        </table>
+                <!-- ===== SM TAB ===== -->
+                <div id="labPane_SM">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Year</label>
+                            <select id="labSMYear" onchange="updateLabSMSem()">
+                                <option value="">Select Year</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Semester</label>
+                            <select id="labSMSem" disabled onchange="loadLabSMSubjects()">
+                                <option value="">Select Year first</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Lab Subject</label>
+                            <select id="labSubjectSel" disabled onchange="onLabSubjectChange()">
+                                <option value="">Select Semester first</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Academic Year (A.Y)</label>
+                            <input type="text" id="labAcadYear" value="2025-26" placeholder="e.g. 2025-26"
+                                style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;">
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Experiments (1–40)</label>
+                            <input type="number" id="labTotalExp" value="10" min="1" max="40" placeholder="e.g. 10">
+                        </div>
                     </div>
-
-                    <div style="margin-top:20px;">
-                        <button class="btn btn-success" onclick="generateLabAssessmentExcel()">📥 Generate Excel</button>
+                    <!-- Split CIA and IA radio -->
+                    <div
+                        style="margin:14px 0 10px;padding:12px 18px;background:#f8f9ff;border:1px solid #dde3ff;border-radius:8px;">
+                        <label style="font-weight:700;color:#2a5298;margin-bottom:8px;display:block;">Split CIA and
+                            IA</label>
+                        <div style="display:flex;gap:28px;flex-wrap:wrap;padding:4px 0;">
+                            <label
+                                style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#333;">
+                                <input type="radio" name="smSplitMode" id="smSplitYes" value="yes"
+                                    onchange="onSMSplitToggle()" checked>
+                                Yes &mdash; Enter CIA Avg &amp; IA Avg separately
+                            </label>
+                            <label
+                                style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#333;">
+                                <input type="radio" name="smSplitMode" id="smSplitNo" value="no"
+                                    onchange="onSMSplitToggle()">
+                                No &mdash; Enter Total Marks (40), auto-split
+                            </label>
+                        </div>
                     </div>
-                    <div id="labAssessMsg" class="success-message hidden" style="margin-top:14px;"></div>
-                </div>
+                    <div id="labInfoBox" class="info-box hidden" style="margin-bottom:16px;"></div>
+                    <button class="btn btn-primary" onclick="loadLabStudents()">Load Students</button>
+                    <div id="labStudentSection" class="hidden" style="margin-top:24px;">
+                        <h3 style="color:#2a5298;margin-bottom:12px;">📋 Students — Enter Marks</h3>
+                        <p id="smTableHint" style="color:#888;font-size:12px;margin-bottom:10px;">Enter CIA Avg (0–20)
+                            and IA Avg (0–20). Total = CIA + IA.</p>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;background:white;font-size:13px;">
+                                <thead>
+                                    <tr id="smTableHeader"
+                                        style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
+                                        <th style="padding:10px 8px;border:1px solid #ddd;text-align:center;">Sl.No</th>
+                                        <th style="padding:10px 8px;border:1px solid #ddd;text-align:center;">PIN</th>
+                                        <th style="padding:10px 8px;border:1px solid #ddd;text-align:left;">Name</th>
+                                        <th style="padding:10px 8px;border:1px solid #ddd;text-align:center;">CIA Avg
+                                            (20)</th>
+                                        <th style="padding:10px 8px;border:1px solid #ddd;text-align:center;">IA Avg
+                                            (20)</th>
+                                        <th
+                                            style="padding:10px 8px;border:1px solid #ddd;text-align:center;background:#38b2ac;color:white;">
+                                            Total (40)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="labStudentTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top:20px;">
+                            <button class="btn btn-success" onclick="generateSMExcel()">📥 Generate SM Excel (3
+                                Sheets)</button>
+                        </div>
+                        <div id="labAssessMsg" class="success-message hidden" style="margin-top:14px;"></div>
+                    </div>
+                </div><!-- end SM -->
+
+                <!-- ===== PM TAB ===== -->
+                <div id="labPane_PM" style="display:none;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Year</label>
+                            <select id="labPMYear" onchange="updateLabPMSem()">
+                                <option value="">Select Year</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Semester</label>
+                            <select id="labPMSem" disabled onchange="loadLabPMSubjects()">
+                                <option value="">Select Year first</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Lab Subject</label>
+                            <select id="pmSubjectSel" disabled onchange="onPMSubjectChange()">
+                                <option value="">Select Semester first</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Academic Year (A.Y)</label>
+                            <input type="text" id="pmAcadYear" value="2025-26" placeholder="e.g. 2025-26"
+                                style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;">
+                        </div>
+                        <div class="form-group">
+                            <label>Viva Marks</label>
+                            <div class="radio-group" style="padding:12px 0;">
+                                <label class="radio-option">
+                                    <input type="radio" name="pmVivaMode" id="pmVivaYes" value="yes"
+                                        onchange="onVivaToggle()" checked>
+                                    <span style="font-weight:600;">Yes — Viva Separate (Max 10)</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="pmVivaMode" id="pmVivaNo" value="no"
+                                        onchange="onVivaToggle()">
+                                    <span style="font-weight:600;">No — Viva Included</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pmInfoBox" class="info-box hidden" style="margin-bottom:16px;"></div>
+                    <button class="btn btn-primary" onclick="loadPMStudents()">Load Students</button>
+                    <div id="pmStudentSection" class="hidden" style="margin-top:24px;">
+                        <h3 style="color:#2a5298;margin-bottom:12px;">📋 Students — Enter Practical Marks</h3>
+                        <p id="pmTableHint" style="color:#888;font-size:12px;margin-bottom:10px;"></p>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;background:white;font-size:13px;">
+                                <thead>
+                                    <tr id="pmTableHeader"
+                                        style="background:linear-gradient(135deg,#38b2ac 0%,#2d9d86 100%);color:white;">
+                                    </tr>
+                                </thead>
+                                <tbody id="pmStudentTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top:20px;">
+                            <button class="btn btn-success" onclick="generatePMExcel()">📥 Generate PM Excel</button>
+                        </div>
+                        <div id="pmAssessMsg" class="success-message hidden" style="margin-top:14px;"></div>
+                    </div>
+                </div><!-- end PM -->
+
             </div>
+
 
             <!-- UNIT MARKS TAB (Admin) -->
             <div id="unitmarks" class="tab-content">
@@ -2030,10 +2262,12 @@
             <!-- PQP TAB (Admin management) -->
             <div id="adminPqpTab" class="tab-content">
                 <h2 style="color:#6a1b9a;margin-bottom:6px;">📚 Previous Question Papers</h2>
-                <p style="color:#888;font-size:13px;margin-bottom:20px;">Upload Google Drive links for PQP materials. Visible to all students &amp; faculty.</p>
+                <p style="color:#888;font-size:13px;margin-bottom:20px;">Upload Google Drive links for PQP materials.
+                    Visible to all students &amp; faculty.</p>
 
                 <!-- Upload form -->
-                <div style="background:#f3e5f5;border-radius:12px;padding:20px;margin-bottom:24px;border:1px solid #ce93d8;">
+                <div
+                    style="background:#f3e5f5;border-radius:12px;padding:20px;margin-bottom:24px;border:1px solid #ce93d8;">
                     <h3 style="color:#6a1b9a;margin-bottom:16px;font-size:15px;">➕ Add PQP Entry</h3>
                     <div class="form-grid">
                         <div class="form-group">
@@ -2043,7 +2277,8 @@
                         </div>
                         <div class="form-group">
                             <label>🎯 Target Year / Semester</label>
-                            <select id="pqpEntryTarget" style="padding:10px;border:2px solid #ce93d8;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;">
+                            <select id="pqpEntryTarget"
+                                style="padding:10px;border:2px solid #ce93d8;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;">
                                 <option value="all">All Students &amp; Faculty</option>
                                 <option value="1">Year 1 (1st Year – all sems)</option>
                                 <option value="2-3">Sem 3 (2nd Year, Sem 3)</option>
@@ -2055,7 +2290,8 @@
                             <label>🔗 Google Drive Link</label>
                             <input type="url" id="pqpEntryLink" placeholder="https://drive.google.com/..."
                                 style="padding:10px;border:2px solid #ce93d8;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;">
-                            <small style="color:#888;margin-top:4px;display:block;">Ensure the link is set to "Anyone with link can view"</small>
+                            <small style="color:#888;margin-top:4px;display:block;">Ensure the link is set to "Anyone
+                                with link can view"</small>
                         </div>
                     </div>
                     <div id="pqpAdminMsg" style="display:none;margin-top:12px;"></div>
@@ -2074,21 +2310,26 @@
                 <div id="adminPqpEmpty" style="display:none;text-align:center;padding:40px 20px;">
                     <div style="font-size:48px;margin-bottom:12px;">📚</div>
                     <div style="font-size:16px;font-weight:600;color:#6a1b9a;">No PQP entries yet</div>
-                    <div style="font-size:13px;color:#999;margin-top:6px;">Use the form above to add PQP Drive links.</div>
+                    <div style="font-size:13px;color:#999;margin-top:6px;">Use the form above to add PQP Drive links.
+                    </div>
                 </div>
             </div>
 
             <!-- CLASS LOGBOOK TAB (Admin only) -->
             <div id="classlogbook" class="tab-content">
                 <h2 style="color:#2a5298;margin-bottom:6px;">📖 Class Log Book</h2>
-                <p style="color:#888;font-size:13px;margin-bottom:20px;">Generate a day-wise class logbook for a year/semester and date range. Formatted for printing (portrait A4, 3 days per page).</p>
+                <p style="color:#888;font-size:13px;margin-bottom:20px;">Generate a day-wise class logbook for a
+                    year/semester and date range. Formatted for printing (portrait A4, 3 days per page).</p>
 
-                <div style="background:#f8f9fa;border-radius:12px;padding:20px;border:1px solid #e0e0e0;margin-bottom:20px;">
+                <div
+                    style="background:#f8f9fa;border-radius:12px;padding:20px;border:1px solid #e0e0e0;margin-bottom:20px;">
                     <h3 style="color:#2a5298;margin-bottom:16px;font-size:15px;">📋 Computer Engineering Department</h3>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Year</label>
-                            <select id="clbYear" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;" onchange="updateClbSem()">
+                            <select id="clbYear"
+                                style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;"
+                                onchange="updateClbSem()">
                                 <option value="">-- Select Year --</option>
                                 <option value="1">1st Year</option>
                                 <option value="2">2nd Year</option>
@@ -2097,26 +2338,34 @@
                         </div>
                         <div class="form-group">
                             <label>Semester</label>
-                            <select id="clbSem" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;" disabled onchange="updateClbPreview()">
+                            <select id="clbSem"
+                                style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;"
+                                disabled onchange="updateClbPreview()">
                                 <option value="">Select Year first</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Academic Year</label>
-                            <input type="text" id="clbAY" placeholder="e.g. 2025-26" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;">
+                            <input type="text" id="clbAY" placeholder="e.g. 2025-26"
+                                style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;">
                         </div>
                         <div class="form-group">
                             <label>From Date</label>
-                            <input type="date" id="clbFromDate" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;" onchange="updateClbPreview()">
+                            <input type="date" id="clbFromDate"
+                                style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;"
+                                onchange="updateClbPreview()">
                         </div>
                         <div class="form-group">
                             <label>To Date</label>
-                            <input type="date" id="clbToDate" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;" onchange="updateClbPreview()">
+                            <input type="date" id="clbToDate"
+                                style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;"
+                                onchange="updateClbPreview()">
                         </div>
                     </div>
 
                     <!-- Preview Box -->
-                    <div id="clbPreviewBox" style="display:none;background:linear-gradient(135deg,#e0f2fe,#f0fdf4);border-radius:8px;padding:14px;margin-top:14px;border:1px solid #bae6fd;">
+                    <div id="clbPreviewBox"
+                        style="display:none;background:linear-gradient(135deg,#e0f2fe,#f0fdf4);border-radius:8px;padding:14px;margin-top:14px;border:1px solid #bae6fd;">
                         <div style="font-weight:700;color:#0369a1;margin-bottom:6px;">📊 Preview</div>
                         <div style="font-size:13px;color:#555;" id="clbPreviewText"></div>
                     </div>
@@ -2248,11 +2497,12 @@
                                 placeholder="Enter your message here..."></textarea>
                         </div>
                         <div class="form-group" style="margin-top:14px;">
-                            <label>📎 Google Drive Link <small style="color:#888;">(optional if message provided)</small></label>
-                            <input type="url" id="notifDriveLink"
-                                placeholder="https://drive.google.com/..."
+                            <label>📎 Google Drive Link <small style="color:#888;">(optional if message
+                                    provided)</small></label>
+                            <input type="url" id="notifDriveLink" placeholder="https://drive.google.com/..."
                                 style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box;">
-                            <small style="color:#888;margin-top:4px;display:block;">Students will see a "📎 View Document" button linking to this URL.</small>
+                            <small style="color:#888;margin-top:4px;display:block;">Students will see a "📎 View
+                                Document" button linking to this URL.</small>
                         </div>
                         <div class="form-group" id="scrollSpeedGroup" style="margin-top:14px;">
                             <label>Scroll Speed</label>
@@ -7376,9 +7626,9 @@
         function _fmtDateFull(dateStr) {
             if (!dateStr) return '';
             const d = new Date(dateStr + 'T00:00:00');
-            const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            return `${String(d.getDate()).padStart(2,'0')}-${months[d.getMonth()]}-${d.getFullYear()} (${days[d.getDay()]})`;
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()} (${days[d.getDay()]})`;
         }
 
         // ────────────────────────────────────────────────────────────────
@@ -7389,7 +7639,7 @@
             _topicCtx = { date, periods, subCode, subjectName, yearSem, key: _topicKey(yearSem, periods) };
 
             // Populate info fields
-            document.getElementById('tpDate').textContent    = _fmtDateFull(date);
+            document.getElementById('tpDate').textContent = _fmtDateFull(date);
             document.getElementById('tpPeriods').textContent = periods;
             document.getElementById('tpSubject').textContent = `${subCode} – ${subjectName}`;
 
@@ -7418,14 +7668,14 @@
             const topic = document.getElementById('topicPopupInput').value.trim();
             try {
                 const entry = {
-                    subject:     _topicCtx.subCode,
+                    subject: _topicCtx.subCode,
                     subjectName: _topicCtx.subjectName,
-                    periods:     _topicCtx.periods,
-                    faculty:     currentUser,
+                    periods: _topicCtx.periods,
+                    faculty: currentUser,
                     facultyName: currentUserName,
-                    yearSem:     _topicCtx.yearSem,
-                    topic:       topic,
-                    timestamp:   new Date().toISOString()
+                    yearSem: _topicCtx.yearSem,
+                    topic: topic,
+                    timestamp: new Date().toISOString()
                 };
                 await db.collection('dailyTopics').doc(_topicCtx.date)
                     .set({ [_topicCtx.key]: entry }, { merge: true });
@@ -7456,9 +7706,9 @@
                 periods = checked.join(',');
             }
 
-            if (!y)      { alert('Please select Year'); return; }
+            if (!y) { alert('Please select Year'); return; }
             if (y != 1 && !s) { alert('Please select Semester'); return; }
-            if (!date)   { alert('Please select Date'); return; }
+            if (!date) { alert('Please select Date'); return; }
             if (!periods) { alert('Please select at least one Period'); return; }
 
             // Permission check: only the faculty who posted can edit topics
@@ -7486,15 +7736,15 @@
 
             // Determine subject from attendance data
             const periodList = getPeriodList(periods);
-            const attData    = getAttData(date);
-            const students   = STUDENTS[y]?.[s] || [];
+            const attData = getAttData(date);
+            const students = STUDENTS[y]?.[s] || [];
             let subCode = '', subjectName = '';
             for (const st of students) {
                 const pd = attData[st.pin]?.[periodList[0]];
                 if (pd?.subject) { subCode = pd.subject; subjectName = getSubjectName(subCode); break; }
             }
-            _topicCtx.subCode      = subCode;
-            _topicCtx.subjectName  = subjectName;
+            _topicCtx.subCode = subCode;
+            _topicCtx.subjectName = subjectName;
 
             const infoEl = document.getElementById('topicEditInfo');
             infoEl.innerHTML = `<strong>Date:</strong> ${_fmtDateFull(date)} &nbsp;|&nbsp;
@@ -7542,21 +7792,21 @@
 
         async function saveTopicFromEdit() {
             if (!_topicCtx) return;
-            const topic   = document.getElementById('topicEditInput').value.trim();
-            const msgEl   = document.getElementById('topicEditMsg');
+            const topic = document.getElementById('topicEditInput').value.trim();
+            const msgEl = document.getElementById('topicEditMsg');
             msgEl.style.display = 'block';
-            msgEl.style.color   = '#1565c0';
-            msgEl.textContent   = '⏳ Saving…';
+            msgEl.style.color = '#1565c0';
+            msgEl.textContent = '⏳ Saving…';
             try {
                 const entry = {
-                    subject:     _topicCtx.subCode,
+                    subject: _topicCtx.subCode,
                     subjectName: _topicCtx.subjectName,
-                    periods:     _topicCtx.periods,
-                    faculty:     currentUser,
+                    periods: _topicCtx.periods,
+                    faculty: currentUser,
                     facultyName: currentUserName,
-                    yearSem:     _topicCtx.yearSem,
-                    topic:       topic,
-                    timestamp:   new Date().toISOString()
+                    yearSem: _topicCtx.yearSem,
+                    topic: topic,
+                    timestamp: new Date().toISOString()
                 };
                 await db.collection('dailyTopics').doc(_topicCtx.date)
                     .set({ [_topicCtx.key]: entry }, { merge: true });
@@ -7615,7 +7865,7 @@
 
         function updateCharCount(inputId, counterId) {
             const len = (document.getElementById(inputId)?.value || '').length;
-            const el  = document.getElementById(counterId);
+            const el = document.getElementById(counterId);
             if (el) el.textContent = Math.min(len, 120);
         }
 
@@ -7636,12 +7886,16 @@
             const semSel = document.getElementById('ecSem');
             semSel.innerHTML = '<option value="">Select Year first</option>';
             semSel.disabled = true;
+            // Reset semester label too
+            const semLabel = document.getElementById('ecSemLabel');
+            if (semLabel) semLabel.textContent = 'Semester';
             document.getElementById('ecSubject').innerHTML = '<option value="">-- Select Subject --</option>';
 
             document.getElementById('ecTimeFrom').value = '';
             document.getElementById('ecTimeTo').value = '';
-            document.getElementById('ecWdPeriods').value = '1';
             document.getElementById('ecFN').checked = true;
+            const ecSB = document.getElementById('ecStatusBox');
+            if (ecSB) { ecSB.style.display = 'none'; ecSB.innerHTML = ''; }
             for (let i = 1; i <= 7; i++) {
                 const cb = document.getElementById('echP' + i);
                 if (cb) cb.checked = false;
@@ -7680,16 +7934,16 @@
             ecDetectDayType();
         }
 
-        // Set default timings based on selected session (12-hr display, no leading zeros)
+        // Set default timings based on selected session (12-hr display)
         function ecApplySessionDefaults() {
             const session = document.querySelector('input[name="ecSession"]:checked')?.value || 'FN';
             if (session === 'FN') {
-                document.getElementById('ecTimeFrom').value = '8:30';
-                document.getElementById('ecTimeTo').value   = '9:30';
+                document.getElementById('ecTimeFrom').value = '8:30 AM';
+                document.getElementById('ecTimeTo').value = '9:30 AM';
             } else {
-                // AN = Afternoon (after college) — show in 12-hr style
-                document.getElementById('ecTimeFrom').value = '4:30';
-                document.getElementById('ecTimeTo').value   = '5:30';
+                // AN = Afternoon (after college) — 12-hr style: 4:30 PM, 5:30 PM
+                document.getElementById('ecTimeFrom').value = '4:30 PM';
+                document.getElementById('ecTimeTo').value = '5:30 PM';
             }
         }
 
@@ -7722,7 +7976,7 @@
                 wdSec.style.display = 'none';
                 holSec.style.display = 'block';
             } else {
-                const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 badge.style.background = '#d1e7dd';
                 badge.style.color = '#0a3622';
                 badge.style.border = '1px solid #a3cfbb';
@@ -7752,14 +8006,18 @@
                 semSel.disabled = true;
                 return;
             }
-            semSel.disabled = false;
             if (y == 1) {
-                semSel.innerHTML = '<option value="1">Semester 1</option>';
+                // 1st year: disable semester, show Year-wise Course (mirrors Attendance tab)
+                semSel.innerHTML = '<option value="1">Year-wise Course</option>';
+                semSel.disabled = true;
                 ecPopulateSubjects();
+                _ecMaybeShowStatus();
             } else if (y == 2) {
-                semSel.innerHTML = '<option value="">Select Sem</option><option value="3">Semester 3</option><option value="4">Semester 4</option>';
+                semSel.disabled = false;
+                semSel.innerHTML = '<option value="">Select Sem</option><option value="3">Sem 3</option><option value="4">Sem 4</option>';
             } else {
-                semSel.innerHTML = '<option value="">Select Sem</option><option value="5">Semester 5</option>';
+                semSel.disabled = false;
+                semSel.innerHTML = '<option value="">Select Sem</option><option value="5">Sem 5</option>';
             }
         }
 
@@ -7767,11 +8025,68 @@
             const y = document.getElementById('ecYear').value;
             const s = document.getElementById('ecSem').value;
             const subSel = document.getElementById('ecSubject');
+            const msgEl = document.getElementById('ecMsg');
             subSel.innerHTML = '<option value="">-- Select Subject --</option>';
             if (!y || !s) return;
 
+            const yearSem = (y == 1) ? '1-1' : `${y}-${s}`;
+            const date = document.getElementById('ecDate').value;
+
+            // ── Academic Calendar Validation ──
+            // Only check on working days (ecWorkingDaySection visible)
+            const wdSec = document.getElementById('ecWorkingDaySection');
+            const isWorkingDayVisible = wdSec && wdSec.style.display !== 'none';
+
+            if (isWorkingDayVisible && date && CALENDAR_DATES && CALENDAR_DATES[yearSem]) {
+                const calEnd = CALENDAR_DATES[yearSem].end;   // 'YYYY-MM-DD'
+                const calStart = CALENDAR_DATES[yearSem].start;
+                if (calEnd && date > calEnd) {
+                    // Date is AFTER the academic year/sem end — block recording
+                    subSel.innerHTML = '<option value="">-- Not Available --</option>';
+                    subSel.disabled = true;
+                    if (msgEl) {
+                        msgEl.style.display = 'block';
+                        msgEl.style.background = '#f8d7da';
+                        msgEl.style.color = '#721c24';
+                        const label = _ecYearSemLabel(yearSem);
+                        const endFmt = _fmt(calEnd);
+                        msgEl.innerHTML = `⛔ Academic year for <strong>${label}</strong> ended on <strong>${endFmt}</strong>.<br>` +
+                            `Extra class cannot be recorded beyond the academic calendar end date.`;
+                    }
+                    return;  // Do NOT proceed to populate subjects
+                }
+                if (calStart && date < calStart) {
+                    // Date is BEFORE the academic year/sem start — block recording
+                    subSel.innerHTML = '<option value="">-- Not Available --</option>';
+                    subSel.disabled = true;
+                    if (msgEl) {
+                        msgEl.style.display = 'block';
+                        msgEl.style.background = '#fff3cd';
+                        msgEl.style.color = '#856404';
+                        const label = _ecYearSemLabel(yearSem);
+                        const startFmt = _fmt(calStart);
+                        msgEl.innerHTML = `⚠️ Academic year for <strong>${label}</strong> starts on <strong>${startFmt}</strong>.<br>` +
+                            `Selected date is before the academic calendar start date.`;
+                    }
+                    return;
+                }
+            } else if (isWorkingDayVisible && date && CALENDAR_DATES && !CALENDAR_DATES[yearSem]) {
+                // No calendar set for this year/sem — warn but allow
+                if (msgEl) {
+                    msgEl.style.display = 'block';
+                    msgEl.style.background = '#fff3cd';
+                    msgEl.style.color = '#856404';
+                    msgEl.textContent = '⚠️ No academic calendar set for this class. Please configure in Settings.';
+                }
+            } else {
+                // Clear any previous calendar-related message
+                if (msgEl) { msgEl.style.display = 'none'; msgEl.textContent = ''; }
+            }
+
+            // Re-enable subject in case it was disabled by a previous calendar check
+            subSel.disabled = false;
+
             // Filter subjects mapped to current faculty AND belonging to the selected year/sem
-            // (same logic as the attendance tab's loadOtherSubjects)
             const mySubjects = Object.keys(FACULTY_MAP)
                 .filter(code => FACULTY_MAP[code] === currentUser && isSubjectForYearSem(code, y, s));
 
@@ -7784,30 +8099,129 @@
 
             if (mySubjects.length === 0) {
                 subSel.innerHTML = '<option value="">No subjects assigned for this class</option>';
+                if (msgEl) {
+                    msgEl.style.display = 'block';
+                    msgEl.style.background = '#f8d7da';
+                    msgEl.style.color = '#721c24';
+                    msgEl.textContent = '❗ No subjects assigned to you for this class. Please check with Admin.';
+                }
+            } else {
+                if (msgEl && msgEl.textContent.includes('No subjects assigned')) {
+                    msgEl.style.display = 'none'; msgEl.textContent = '';
+                }
             }
+            _ecMaybeShowStatus();
         }
 
-        async function validateWorkingDayExtra(date, yearSem, proposed) {
-            // Rule: Maximum 2 extra class periods allowed per year/semester (across all working days).
-            // Query all working-day extra classes for this yearSem;
-            // use single-field query + client-side filter to avoid composite index requirement.
+        /** Trigger status check whenever date + year/sem are both known */
+        function _ecMaybeShowStatus() {
+            const date = document.getElementById('ecDate').value;
+            const year = document.getElementById('ecYear').value;
+            const sem = document.getElementById('ecSem').value;
+            // Only show status for working days
+            const wdSec = document.getElementById('ecWorkingDaySection');
+            if (!date || !year || !sem || !wdSec || wdSec.style.display === 'none') return;
+            const yearSem = (year == 1) ? '1-1' : `${year}-${sem}`;
+            showExtraClassStatus(date, yearSem);
+        }
+
+        /**
+         * Validate: max 2 extra periods PER WORKING DAY PER YEAR/SEM (1 FN + 1 AN).
+         * Each year/sem is independent; different dates are independent.
+         * Returns { allowed, existingDocs } on success; throws on failure.
+         */
+        async function validateWorkingDayExtra(date, yearSem, newSession) {
+            // Fetch existing working-day extras for this date + yearSem
+            // Use two single-field queries to avoid composite index; merge client-side.
             const snap = await db.collection('extraClasses')
+                .where('date', '==', date)
                 .where('yearSem', '==', yearSem)
                 .get();
-            let semTotal = 0;
+
+            const wdDocs = [];
             snap.forEach(doc => {
                 const d = doc.data();
-                if (d.isWorkingDay) semTotal += (d.numberOfPeriods || 1);
+                if (d.isWorkingDay) wdDocs.push(d);
             });
-            if (semTotal + proposed > 2) {
-                const remaining = Math.max(0, 2 - semTotal);
+
+            const classLabel = _ecYearSemLabel(yearSem);
+            // Rule 1: Max 2 per working day per year/sem
+            if (wdDocs.length >= 2) {
+                const sessions = wdDocs.map(d => `${d.session} (${d.timeFrom}–${d.timeTo})`).join(', ');
                 throw new Error(
-                    `Maximum 2 extra class periods allowed per semester. ` +
-                    `${semTotal} already recorded this semester. ` +
-                    (remaining > 0
-                        ? `You can add only ${remaining} more period(s).`
-                        : 'No more extra class periods allowed this semester.')
+                    `Maximum 2 extra periods already recorded for ${classLabel} on ${_fmt(date)}.\n` +
+                    `Existing: ${sessions}\nNo more slots available for this date.`
                 );
+            }
+
+            // Rule 2: Same session not allowed twice
+            const sessionExists = wdDocs.some(d => d.session === newSession);
+            if (sessionExists) {
+                const otherSession = newSession === 'FN' ? 'AN' : 'FN';
+                const existingDoc = wdDocs.find(d => d.session === newSession);
+                throw new Error(
+                    `${newSession} extra class already recorded for ${classLabel} on ${_fmt(date)}.\n` +
+                    `Existing: ${newSession} (${existingDoc.timeFrom}–${existingDoc.timeTo})\n` +
+                    `You can record ${otherSession} period for this date.`
+                );
+            }
+
+            return { allowed: true, existingDocs: wdDocs };
+        }
+
+        /** DD-Mon-YYYY formatter helper */
+        function _fmt(dateStr) {
+            if (!dateStr) return dateStr;
+            const d = new Date(dateStr + 'T00:00:00');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+        }
+
+        /** Convert yearSem code to friendly label: '1-1'→'1st Year', '2-3'→'Sem 3', '2-4'→'Sem 4', '3-5'→'Sem 5' */
+        function _ecYearSemLabel(yearSem) {
+            const labels = { '1-1': '1st Year', '2-3': 'Sem 3', '2-4': 'Sem 4', '3-5': 'Sem 5' };
+            return labels[yearSem] || yearSem;
+        }
+
+        /** Show slot status for a date + yearSem in the Working Day section */
+        async function showExtraClassStatus(date, yearSem) {
+            const sb = document.getElementById('ecStatusBox');
+            if (!sb || !date || !yearSem) { if (sb) sb.style.display = 'none'; return; }
+            const classLabel = _ecYearSemLabel(yearSem);
+            try {
+                const snap = await db.collection('extraClasses')
+                    .where('date', '==', date)
+                    .where('yearSem', '==', yearSem)
+                    .get();
+                const wdDocs = [];
+                snap.forEach(doc => { const d = doc.data(); if (d.isWorkingDay) wdDocs.push(d); });
+
+                sb.style.display = 'block';
+                if (wdDocs.length === 0) {
+                    sb.style.background = '#e8f5e9';
+                    sb.style.border = '1px solid #a5d6a7';
+                    sb.style.color = '#1b5e20';
+                    sb.innerHTML = `ℹ️ No extra classes recorded for <strong>${classLabel}</strong> on ${_fmt(date)}.<br>` +
+                        `<strong>Available: FN and AN slots (2 total)</strong>`;
+                } else if (wdDocs.length === 1) {
+                    const first = wdDocs[0];
+                    const remaining = first.session === 'FN' ? 'AN' : 'FN';
+                    sb.style.background = '#fff8e1';
+                    sb.style.border = '1px solid #ffc107';
+                    sb.style.color = '#5d4037';
+                    sb.innerHTML = `⚠️ Existing extra class for <strong>${classLabel}</strong> on ${_fmt(date)}:<br>` +
+                        `✅ <strong>${first.session}</strong> (${first.timeFrom}–${first.timeTo}) — ${first.subject}<br>` +
+                        `<strong>Available: ${remaining} slot (1 remaining)</strong>`;
+                } else {
+                    const sessions = wdDocs.map(d => `${d.session} (${d.timeFrom}–${d.timeTo})`).join(', ');
+                    sb.style.background = '#fce4ec';
+                    sb.style.border = '1px solid #e57373';
+                    sb.style.color = '#b71c1c';
+                    sb.innerHTML = `❌ Maximum extra classes reached for <strong>${classLabel}</strong> on ${_fmt(date)}.<br>` +
+                        `Existing: <strong>${sessions}</strong><br>No more slots available for this date.`;
+                }
+            } catch (e) {
+                sb.style.display = 'none';
             }
         }
 
@@ -7821,16 +8235,16 @@
             };
 
             // ── Gather values ──
-            const date    = document.getElementById('ecDate').value;
-            const year    = document.getElementById('ecYear').value;
-            const sem     = document.getElementById('ecSem').value;
+            const date = document.getElementById('ecDate').value;
+            const year = document.getElementById('ecYear').value;
+            const sem = document.getElementById('ecSem').value;
             const subCode = document.getElementById('ecSubject').value;
-            const topic   = document.getElementById('ecTopic').value.trim();
+            const topic = document.getElementById('ecTopic').value.trim();
 
-            if (!date)    { showMsg('❗ Please select a date.', false); return; }
+            if (!date) { showMsg('❗ Please select a date.', false); return; }
             if (!year || !sem) { showMsg('❗ Please select Year and Semester.', false); return; }
             if (!subCode) { showMsg('❗ Please select a subject.', false); return; }
-            if (!topic)   { showMsg('❗ Please enter the topic covered.', false); return; }
+            if (!topic) { showMsg('❗ Please enter the topic covered.', false); return; }
 
             const yearSem = (year == 1) ? '1-1' : `${year}-${sem}`;
 
@@ -7844,26 +8258,28 @@
 
             try {
                 if (isWorkingDay) {
-                    const session  = document.querySelector('input[name="ecSession"]:checked')?.value || 'FN';
+                    const session = document.querySelector('input[name="ecSession"]:checked')?.value || 'FN';
                     const timeFrom = document.getElementById('ecTimeFrom').value;
-                    const timeTo   = document.getElementById('ecTimeTo').value;
-                    const nPeriods = parseInt(document.getElementById('ecWdPeriods').value) || 1;
+                    const timeTo = document.getElementById('ecTimeTo').value;
 
                     if (!timeFrom || !timeTo) { showMsg('❗ Please enter From and To times.', false); return; }
 
-                    // Validate max 2
-                    await validateWorkingDayExtra(date, yearSem, nPeriods);
+                    // Validate: per-date, per-yearSem, per-session (max 2: 1 FN + 1 AN)
+                    await validateWorkingDayExtra(date, yearSem, session);
 
                     await db.collection('extraClasses').add({
                         date, yearSem, subject: subCode,
                         subjectName: getSubjectName(subCode),
                         faculty: currentUser, facultyName: currentUserName || currentUser,
                         isWorkingDay: true, session, timeFrom, timeTo,
-                        numberOfPeriods: nPeriods, periodsChecked: [],
+                        numberOfPeriods: 1,          // always 1 for working days
+                        periodsChecked: [],
                         topicsCovered: topic,
                         timestamp: new Date().toISOString()
                     });
-                    showMsg(`✅ Extra class saved (${session}, ${timeFrom}–${timeTo}, ${nPeriods} period${nPeriods>1?'s':''}).`, true);
+                    showMsg(`✅ Extra class saved (${session}, ${timeFrom}–${timeTo}, 1 period).`, true);
+                    // Refresh status box
+                    showExtraClassStatus(date, yearSem);
 
                 } else {
                     // Holiday / Sunday
@@ -7882,12 +8298,12 @@
                         topicsCovered: topic,
                         timestamp: new Date().toISOString()
                     });
-                    showMsg(`✅ Holiday extra class saved (${checked.length} period${checked.length>1?'s':''}: P${checked.join(',')}).`, true);
+                    showMsg(`✅ Holiday extra class saved (${checked.length} period${checked.length > 1 ? 's' : ''}: P${checked.join(',')}).`, true);
                 }
                 // Clear topic after save
                 document.getElementById('ecTopic').value = '';
                 document.getElementById('ecTopicCount').textContent = '0';
-            } catch(e) {
+            } catch (e) {
                 showMsg('❌ ' + e.message, false);
             }
         }
@@ -7912,14 +8328,14 @@
             });
             // Reset date range
             const fromEl = document.getElementById('logbookFrom');
-            const toEl   = document.getElementById('logbookTo');
+            const toEl = document.getElementById('logbookTo');
             if (fromEl) fromEl.value = '';
-            if (toEl)   toEl.value   = '';
+            if (toEl) toEl.value = '';
             // Reset AY to current year
             const now = new Date();
-            const yr  = now.getFullYear();
+            const yr = now.getFullYear();
             const ayEl = document.getElementById('logbookAY');
-            if (ayEl) ayEl.value = now.getMonth() >= 5 ? `${yr}-${String(yr+1).slice(-2)}` : `${yr-1}-${String(yr).slice(-2)}`;
+            if (ayEl) ayEl.value = now.getMonth() >= 5 ? `${yr}-${String(yr + 1).slice(-2)}` : `${yr - 1}-${String(yr).slice(-2)}`;
 
             // ── Clear view area ──
             const previewEl = document.getElementById('logbookPreview');
@@ -7934,15 +8350,15 @@
 
         async function _buildLogbookRows(subCode) {
             const from = document.getElementById('logbookFrom').value;
-            const to   = document.getElementById('logbookTo').value;
+            const to = document.getElementById('logbookTo').value;
             if (!subCode) { alert('Please select a subject.'); return null; }
             if (!from || !to) { alert('Please select both From and To dates.'); return null; }
-            if (from > to)    { alert('From date must be before To date.'); return null; }
+            if (from > to) { alert('From date must be before To date.'); return null; }
 
             const msgEl = document.getElementById('logbookMsg');
             msgEl.style.display = 'block';
-            msgEl.style.color   = '#1565c0';
-            msgEl.textContent   = '⏳ Loading logbook data…';
+            msgEl.style.color = '#1565c0';
+            msgEl.textContent = '⏳ Loading logbook data…';
 
             try {
                 // ── Step 1: Scan ATTENDANCE_CACHE (loaded from attendance collection at login) ──
@@ -8016,10 +8432,10 @@
                     } else {
                         let consecutive = true;
                         for (let i = 1; i < sortedPeriods.length; i++) {
-                            if (sortedPeriods[i] !== sortedPeriods[i-1] + 1) { consecutive = false; break; }
+                            if (sortedPeriods[i] !== sortedPeriods[i - 1] + 1) { consecutive = false; break; }
                         }
                         periodStr = consecutive
-                            ? `${sortedPeriods[0]}-${sortedPeriods[sortedPeriods.length-1]}`
+                            ? `${sortedPeriods[0]}-${sortedPeriods[sortedPeriods.length - 1]}`
                             : sortedPeriods.join(',');
                     }
 
@@ -8075,7 +8491,7 @@
                         const stripZero = t => t ? t.replace(/^0(\d:)/, '$1') : t;
                         periodLabel = `${e.session}*\n${stripZero(e.timeFrom)}-${stripZero(e.timeTo)}`;
                     } else {
-                        periodLabel = (e.periodsChecked||[]).join(',');
+                        periodLabel = (e.periodsChecked || []).join(',');
                     }
                     allRows.push({
                         date: e.date, yearSem: e.yearSem,
@@ -8157,11 +8573,11 @@
             const previewEl = document.getElementById('logbookPreview');
             const previewText = document.getElementById('logbookPreviewText');
             const from = document.getElementById('logbookFrom').value;
-            const to   = document.getElementById('logbookTo').value;
+            const to = document.getElementById('logbookTo').value;
 
             if (rows.length === 0) {
                 previewEl.style.display = 'block';
-                previewText.innerHTML   = '<strong>No logbook entries found</strong> for this subject and date range.';
+                previewText.innerHTML = '<strong>No logbook entries found</strong> for this subject and date range.';
                 document.getElementById('logbookTableArea').style.display = 'none';
                 return;
             }
@@ -8169,7 +8585,7 @@
             const totalCumulative = rows[rows.length - 1].cumulativePeriod || 0;
 
             previewEl.style.display = 'block';
-            previewText.innerHTML   = `<strong>Total Classes:</strong> ${rows.length} entries &nbsp;|&nbsp;
+            previewText.innerHTML = `<strong>Total Classes:</strong> ${rows.length} entries &nbsp;|&nbsp;
                                        <strong>Cumulative Periods:</strong> ${totalCumulative} &nbsp;|&nbsp;
                                        <strong>Range:</strong> ${from} → ${to}`;
 
@@ -8181,7 +8597,7 @@
             const container = document.getElementById('logbookTableContainer');
             area.style.display = 'block';
 
-            const DAY3 = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+            const DAY3 = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
             const totalCumulative = rows.length ? (rows[rows.length - 1].cumulativePeriod || 0) : 0;
             let html = `<table style="width:100%;border-collapse:collapse;font-size:13px;background:white;">
                 <thead>
@@ -8197,12 +8613,12 @@
 
             rows.forEach(r => {
                 const cumPeriod = r.cumulativePeriod || 0;
-                const d     = new Date(r.date + 'T00:00:00');
-                const dd    = String(d.getDate()).padStart(2,'0');
-                const mm    = String(d.getMonth()+1).padStart(2,'0');
-                const yy    = String(d.getFullYear()).slice(-2);
-                const day3  = DAY3[d.getDay()];
-                const sName = (r.subjectName || getSubjectName(r.subject) || '').substring(0,18);
+                const d = new Date(r.date + 'T00:00:00');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yy = String(d.getFullYear()).slice(-2);
+                const day3 = DAY3[d.getDay()];
+                const sName = (r.subjectName || getSubjectName(r.subject) || '').substring(0, 18);
 
                 // Visual style: amber for working-day extra, light-grey for holiday extra, white for normal
                 const rowBg = r.isExtraClass
@@ -8235,8 +8651,8 @@
 
         async function downloadLogbookPDF() {
             const subCode = document.getElementById('logbookSubject').value;
-            const ay      = (document.getElementById('logbookAY').value || '2025-26').trim();
-            const rows    = await _buildLogbookRows(subCode);
+            const ay = (document.getElementById('logbookAY').value || '2025-26').trim();
+            const rows = await _buildLogbookRows(subCode);
             if (!rows) return;
 
             if (rows.length === 0) {
@@ -8262,14 +8678,14 @@
             // ── Table ────────────────────────────────────────────────────
             // Portrait A4 usable width: 190mm
             // Date/Day(20) + Period(16) + SubCode/Name(26) + Topic(90) + Cumulative(18) + Sign(20) = 190mm
-            const DAY3 = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+            const DAY3 = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
             const totalCumulative = rows.length ? (rows[rows.length - 1].cumulativePeriod || 0) : 0;
             const body = rows.map(r => {
-                const d    = new Date(r.date + 'T00:00:00');
-                const dd   = String(d.getDate()).padStart(2,'0');
-                const mm   = String(d.getMonth()+1).padStart(2,'0');
-                const yy   = String(d.getFullYear()).slice(-2);
-                const sName = (r.subjectName || getSubjectName(r.subject) || '').substring(0,20);
+                const d = new Date(r.date + 'T00:00:00');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yy = String(d.getFullYear()).slice(-2);
+                const sName = (r.subjectName || getSubjectName(r.subject) || '').substring(0, 20);
                 return [
                     `${dd}/${mm}/${yy}\n${DAY3[d.getDay()]}`,
                     r.periods,
@@ -8282,7 +8698,7 @@
 
             doc.autoTable({
                 startY: 34,
-                head: [['Date/Day','Period\nNos.','Sub. Code\nSub. Name','Topic Covered','Cumulative\nPeriods','Staff\nSign']],
+                head: [['Date/Day', 'Period\nNos.', 'Sub. Code\nSub. Name', 'Topic Covered', 'Cumulative\nPeriods', 'Staff\nSign']],
                 body: body,
                 columnStyles: {
                     0: { cellWidth: 20, halign: 'center' },
@@ -8303,7 +8719,7 @@
                 },
                 bodyStyles: { fontSize: 8, cellPadding: 2.5, fillColor: [255, 255, 255], lineColor: [0, 0, 0], lineWidth: 0.3 },
                 alternateRowStyles: { fillColor: [255, 255, 255] },
-                styles: { lineColor: [0,0,0], lineWidth: 0.3 },
+                styles: { lineColor: [0, 0, 0], lineWidth: 0.3 },
                 margin: { left: 10, right: 10 },
                 tableWidth: pageW - 20
             });
@@ -8317,7 +8733,7 @@
 
             // ── Save ─────────────────────────────────────────────────────
             const from = document.getElementById('logbookFrom').value;
-            const to   = document.getElementById('logbookTo').value;
+            const to = document.getElementById('logbookTo').value;
             doc.save(`Logbook_${subCode}_${from}_to_${to}.pdf`);
         }
 
@@ -8344,7 +8760,7 @@
             const now = new Date();
             const yr = now.getFullYear();
             const ayEl = document.getElementById('clbAY');
-            if (ayEl) ayEl.value = now.getMonth() >= 5 ? `${yr}-${String(yr+1).slice(-2)}` : `${yr-1}-${String(yr).slice(-2)}`;
+            if (ayEl) ayEl.value = now.getMonth() >= 5 ? `${yr}-${String(yr + 1).slice(-2)}` : `${yr - 1}-${String(yr).slice(-2)}`;
 
             // ── Clear preview box and view area ──
             const previewBox = document.getElementById('clbPreviewBox');
@@ -8423,14 +8839,14 @@
             const extrasMap = {};  // date → array of extra class docs
 
             // Chunk into groups of 30 (Firestore 'in' limit)
-            const chunkArr = (arr, n) => { const out = []; for (let i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n)); return out; };
+            const chunkArr = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
 
             // 1. dailyTopics — one doc per date
             for (const chunk of chunkArr(dates, 30)) {
                 try {
                     const snap = await db.collection('dailyTopics').where(firebase.firestore.FieldPath.documentId(), 'in', chunk).get();
                     snap.forEach(doc => { topicsMap[doc.id] = doc.data(); });
-                } catch(e) {
+                } catch (e) {
                     console.warn('[CLB] dailyTopics chunk fetch error:', e.message);
                 }
             }
@@ -8459,7 +8875,7 @@
                 });
                 extrasFetched = true;
                 console.log(`[CLB] extraClasses composite query OK — found ${snap.size} docs`);
-            } catch(e) {
+            } catch (e) {
                 console.warn('[CLB] extraClasses composite index query failed, trying fallback:', e.message);
             }
 
@@ -8479,7 +8895,7 @@
                         extrasMap[d.date].push(d);
                     });
                     console.log(`[CLB] extraClasses fallback query OK — found ${snap.size} docs`);
-                } catch(e2) {
+                } catch (e2) {
                     console.error('[CLB] extraClasses fallback query also failed:', e2.message);
                 }
             }
@@ -8597,7 +9013,7 @@
                     const nxt = dayData[i + count];
                     const sameFac = cur.faculty && nxt.faculty && cur.faculty === nxt.faculty;
                     const sameSub = cur.subjectCode && nxt.subjectCode && cur.subjectCode === nxt.subjectCode;
-                    const consec  = nxt.period === dayData[i + count - 1].period + 1;
+                    const consec = nxt.period === dayData[i + count - 1].period + 1;
                     const bothPosted = cur.posted && nxt.posted;
                     if (sameFac && sameSub && consec && bothPosted) count++;
                     else break;
@@ -8619,8 +9035,8 @@
 
         function generateClbDayTableHTML(date, dayData) {
             const [dy, dm, dd] = date.split('-').map(Number);
-            const dayFullNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-            const dayName = dayFullNames[new Date(dy, dm-1, dd).getDay()].toUpperCase();
+            const dayFullNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const dayName = dayFullNames[new Date(dy, dm - 1, dd).getDay()].toUpperCase();
 
             const mergeMap = buildClbMergeMap(dayData);
 
@@ -8685,7 +9101,7 @@
 
         function generateClbPageHeader(y, s, ay) {
             const yearLabel = y == 1 ? '1st Year' : y == 2 ? '2nd Year' : '3rd Year';
-            const semLabel  = y == 1 ? 'Sem 1' : `Sem ${s}`;
+            const semLabel = y == 1 ? 'Sem 1' : `Sem ${s}`;
             return `
             <div style="border:2px solid #000;margin-bottom:16px;">
               <div style="text-align:center;font-weight:700;font-size:16px;padding:6px;border-bottom:1px solid #000;">GOVT. POLYTECHNIC, DHARMAVARAM</div>
@@ -8763,7 +9179,7 @@
                 document.getElementById('clbTableContainer').innerHTML = fullHtml;
                 document.getElementById('clbTableArea').style.display = 'block';
                 msgEl.style.display = 'none';
-            } catch(e) {
+            } catch (e) {
                 msgEl.style.color = '#c62828';
                 msgEl.textContent = '❌ Error: ' + e.message;
             }
@@ -8805,7 +9221,7 @@
 
             const yearLabel = y == 1 ? '1st Year' : y == 2 ? '2nd Year' : '3rd Year';
             const semLabel = y == 1 ? 'Sem 1' : `Sem ${s}`;
-            const dayFullNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const dayFullNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
             try {
                 msgEl.textContent = '⏳ Fetching data…';
@@ -8850,7 +9266,7 @@
 
                     for (const { date, dayData } of chunk) {
                         const [dy2, dm2, dd2] = date.split('-').map(Number);
-                        const dayName = dayFullNames[new Date(dy2, dm2-1, dd2).getDay()].toUpperCase();
+                        const dayName = dayFullNames[new Date(dy2, dm2 - 1, dd2).getDay()].toUpperCase();
 
                         // Day header row
                         doc.autoTable({
@@ -8880,13 +9296,13 @@
                         if (!dayData || dayData.length === 0) {
                             doc.autoTable({
                                 startY: yPos,
-                                head: [['PD','SUB CODE','SUBJECT NAME','STAFF NAME','TOPICS COVERED','SIGNATURE','REMARKS']],
+                                head: [['PD', 'SUB CODE', 'SUBJECT NAME', 'STAFF NAME', 'TOPICS COVERED', 'SIGNATURE', 'REMARKS']],
                                 body: [['—', '', '', '', 'No attendance posted', '', '']],
                                 columnStyles: colStyles,
-                                headStyles: { fillColor: [232,234,246], textColor: 0, fontStyle: 'bold', fontSize: 6.5, halign: 'center' },
-                                bodyStyles: { fontSize: 7, cellPadding: 1.5, fillColor: [255,255,255] },
-                                alternateRowStyles: { fillColor: [255,255,255] },
-                                styles: { lineColor: [0,0,0], lineWidth: 0.3 },
+                                headStyles: { fillColor: [232, 234, 246], textColor: 0, fontStyle: 'bold', fontSize: 6.5, halign: 'center' },
+                                bodyStyles: { fontSize: 7, cellPadding: 1.5, fillColor: [255, 255, 255] },
+                                alternateRowStyles: { fillColor: [255, 255, 255] },
+                                styles: { lineColor: [0, 0, 0], lineWidth: 0.3 },
                                 margin: { left: 10, right: 10 },
                                 tableWidth: pageW - 20
                             });
@@ -8931,23 +9347,23 @@
 
                         doc.autoTable({
                             startY: yPos,
-                            head: [['PD','SUB CODE','SUBJECT NAME','STAFF NAME','TOPICS COVERED','SIGNATURE','REMARKS']],
+                            head: [['PD', 'SUB CODE', 'SUBJECT NAME', 'STAFF NAME', 'TOPICS COVERED', 'SIGNATURE', 'REMARKS']],
                             body: bodyRows,
                             columnStyles: colStyles,
-                            headStyles: { fillColor: [232,234,246], textColor: 0, fontStyle: 'bold', fontSize: 6.5, halign: 'center' },
-                            bodyStyles: { fontSize: 7, cellPadding: 1.5, fillColor: [255,255,255] },
-                            alternateRowStyles: { fillColor: [255,255,255] },
-                            styles: { lineColor: [0,0,0], lineWidth: 0.3 },
+                            headStyles: { fillColor: [232, 234, 246], textColor: 0, fontStyle: 'bold', fontSize: 6.5, halign: 'center' },
+                            bodyStyles: { fontSize: 7, cellPadding: 1.5, fillColor: [255, 255, 255] },
+                            alternateRowStyles: { fillColor: [255, 255, 255] },
+                            styles: { lineColor: [0, 0, 0], lineWidth: 0.3 },
                             margin: { left: 10, right: 10 },
                             tableWidth: pageW - 20,
-                            willDrawCell: function(hookData) {
+                            willDrawCell: function (hookData) {
                                 if (hookData.section !== 'body') return;
                                 const ri = hookData.row.index, ci = hookData.column.index;
                                 const cellKey = `${ri}_${ci}`;
                                 // Hidden cells: suppress everything — drawn later via post-process
                                 if (hiddenCells.has(cellKey)) {
                                     hookData.cell.text = [];
-                                    hookData.cell.styles.fillColor = [255,255,255];
+                                    hookData.cell.styles.fillColor = [255, 255, 255];
                                     hookData.cell.styles.lineWidth = 0;
                                 }
                                 // Start of multi-row merge in Topics col: suppress text (we center it manually)
@@ -8955,7 +9371,7 @@
                                     hookData.cell.text = [];
                                 }
                             },
-                            didDrawCell: function(hookData) {
+                            didDrawCell: function (hookData) {
                                 if (hookData.section !== 'body') return;
                                 const ri = hookData.row.index, ci = hookData.column.index;
                                 cellPos[`${ri}_${ci}`] = {
@@ -9019,7 +9435,7 @@
                 msgEl.style.color = '#2e7d32';
                 msgEl.textContent = `✅ PDF downloaded: ${filename}`;
                 setTimeout(() => { msgEl.style.display = 'none'; }, 4000);
-            } catch(e) {
+            } catch (e) {
                 msgEl.style.color = '#c62828';
                 msgEl.textContent = '❌ PDF Error: ' + e.message;
                 console.error('[ClassLogbook PDF]', e);
@@ -9030,432 +9446,1455 @@
         //  LAB ASSESSMENT MODULE (Faculty only)
         // ════════════════════════════════════════════════════════════════
 
-        // In-memory state for the current lab session
+        // In-memory state (SM)
         let _labSubjectCode = '';
         let _labSubjectName = '';
         let _labYear = '';
-        let _labSem  = '';
+        let _labSem = '';
         let _labBranch = '';
-        let _labStudents = []; // [{pin, name}, ...]
+        let _labStudents = [];
 
-        /** Called when the Lab Assessment tab is shown. Populates the lab subject dropdown. */
-        function initLabAssessmentTab() {
-            const sel = document.getElementById('labSubjectSel');
+        // In-memory state (PM)
+        let _pmSubjectCode = '';
+        let _pmSubjectName = '';
+        let _pmYear = '';
+        let _pmSem = '';
+        let _pmBranch = '';
+        let _pmStudents = [];
+
+        // ── Lab Assessment: Firestore save/load helpers ─────────────────
+
+        // Debounce timers keyed by pin
+        const _labSaveTimers = {};
+
+        /**
+         * Debounced save of a single student's Lab Assessment record.
+         * Merges only the provided fields so SM and PM don't overwrite each other.
+         * @param {string} subCode  Subject code (document key)
+         * @param {string} ay       Academic Year string
+         * @param {string} pin      Student PIN (document key)
+         * @param {object} fields   Fields to merge
+         */
+        function _labSaveStudent(subCode, ay, pin, fields) {
+            const key = `${subCode}_${ay}_${pin}`;
+            clearTimeout(_labSaveTimers[key]);
+            _labSaveTimers[key] = setTimeout(async () => {
+                try {
+                    // Filter out null/undefined values
+                    const data = {};
+                    Object.entries(fields).forEach(([k, v]) => { if (v !== null && v !== undefined) data[k] = v; });
+                    data.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('Lab_Assessment').doc(subCode)
+                        .collection('AY').doc(ay)
+                        .collection('Students').doc(pin)
+                        .set(data, { merge: true });
+                } catch (e) {
+                    console.warn('[LabAssess] save failed:', e.message);
+                }
+            }, 800);
+        }
+
+        /**
+         * Fetch all saved student records for a subject + AY.
+         * Returns a map: { [pin]: data }
+         */
+        async function _labLoadSavedData(subCode, ay) {
+            try {
+                const snap = await db.collection('Lab_Assessment').doc(subCode)
+                    .collection('AY').doc(ay)
+                    .collection('Students').get();
+                const map = {};
+                snap.forEach(d => { map[d.id] = d.data(); });
+                return map;
+            } catch (e) {
+                console.warn('[LabAssess] load failed:', e.message);
+                return {};
+            }
+        }
+
+        /** Switch SM / PM inner tabs */
+        function switchLabInnerTab(tab) {
+            document.getElementById('labPane_SM').style.display = tab === 'SM' ? '' : 'none';
+            document.getElementById('labPane_PM').style.display = tab === 'PM' ? '' : 'none';
+            const smBtn = document.getElementById('labInnerTab_SM');
+            const pmBtn = document.getElementById('labInnerTab_PM');
+            if (tab === 'SM') {
+                smBtn.style.background = '#667eea'; smBtn.style.color = 'white';
+                pmBtn.style.background = '#e0e0e0'; pmBtn.style.color = '#555';
+            } else {
+                pmBtn.style.background = '#38b2ac'; pmBtn.style.color = 'white';
+                smBtn.style.background = '#e0e0e0'; smBtn.style.color = '#555';
+            }
+        }
+
+        /** Helper: populate a lab-subject select */
+        function _populateLabSubjectDropdown(selId) {
+            const sel = document.getElementById(selId);
             sel.innerHTML = '<option value="">Select Lab Subject</option>';
-
-            // Collect all lab subjects assigned to this faculty
-            const labCodes = Object.keys(FACULTY_MAP).filter(code => {
-                // Subject type is stored as 'Practical' in Firestore (admin dropdown value)
-                const t = getSubjectType(code).toLowerCase();
-                return FACULTY_MAP[code] === currentUser && (t === 'practical' || t === 'lab');
-            });
-
+            const labCodes = _getLabCodes();
             if (labCodes.length === 0) {
                 sel.innerHTML = '<option value="">No Lab subjects assigned</option>';
                 sel.disabled = true;
             } else {
-                labCodes.sort().forEach(code => {
+                labCodes.forEach(code => {
                     const opt = document.createElement('option');
-                    opt.value = code;
-                    opt.textContent = `${code} – ${getSubjectName(code)}`;
+                    opt.value = code; opt.textContent = `${code} – ${getSubjectName(code)}`;
                     sel.appendChild(opt);
                 });
                 sel.disabled = false;
             }
+        }
 
-            // Reset dependent sections
+        /** Helper: derive year/sem from subject code */
+        function _deriveYearSem(code) {
+            const num = parseInt(code.replace('CM-', ''));
+            const prefix = Math.floor(num / 100);
+            let year = '', sem = '';
+            if (prefix === 1) { year = '1'; sem = '1'; }
+            else if (prefix === 3) { year = '2'; sem = '3'; }
+            else if (prefix === 4) { year = '2'; sem = '4'; }
+            else if (prefix === 5) { year = '3'; sem = '5'; }
+            return { year, sem };
+        }
+
+        /** Called when Lab Assessment tab opens */
+        // Cache of all lab subject codes for current user (never filtered by year/sem)
+        let _labCodeCache = null;
+        let _smSplitCache = {};   // { [rowIdx]: {cia, ia} } — populated once on input, reused in Excel
+
+        /** Return a helper: is this code a lab/practical subject? */
+        function isLabSubject(code) {
+            const t = getSubjectType(code).toLowerCase();
+            return t === 'practical' || t === 'lab';
+        }
+
+        function initLabAssessmentTab() {
+            // Reset SM dropdowns
+            const smYear = document.getElementById('labSMYear');
+            const smSem = document.getElementById('labSMSem');
+            const smSub = document.getElementById('labSubjectSel');
+            smYear.value = '';
+            smSem.innerHTML = '<option value="">Select Year first</option>';
+            smSem.disabled = true;
+            smSub.innerHTML = '<option value="">Select Semester first</option>';
+            smSub.disabled = true;
             document.getElementById('labInfoBox').classList.add('hidden');
             document.getElementById('labStudentSection').classList.add('hidden');
             document.getElementById('labAssessMsg').classList.add('hidden');
             document.getElementById('labStudentTableBody').innerHTML = '';
         }
 
-        /** Shows info box when a lab subject is chosen. */
+        // ── SM: Year → Sem cascade ──────────────────────────────────────
+        function updateLabSMSem() {
+            const y = document.getElementById('labSMYear').value;
+            const semSelect = document.getElementById('labSMSem');
+            const subSelect = document.getElementById('labSubjectSel');
+
+            subSelect.innerHTML = '<option value="">Select Semester first</option>';
+            subSelect.disabled = true;
+            document.getElementById('labInfoBox').classList.add('hidden');
+            document.getElementById('labStudentSection').classList.add('hidden');
+            document.getElementById('labStudentTableBody').innerHTML = '';
+
+            if (!y) {
+                semSelect.innerHTML = '<option value="">Select Year first</option>';
+                semSelect.disabled = true;
+                return;
+            }
+            if (y == 1) {
+                semSelect.innerHTML = '<option value="1">Year-wise Course</option>';
+                semSelect.disabled = true;
+                semSelect.value = '1';
+                loadLabSMSubjects();
+            } else if (y == 2) {
+                semSelect.innerHTML = '<option value="">Select Semester</option>';
+                semSelect.innerHTML += '<option value="3">Sem 3</option>';
+                semSelect.innerHTML += '<option value="4">Sem 4</option>';
+                semSelect.disabled = false;
+            } else if (y == 3) {
+                semSelect.innerHTML = '<option value="">Select Semester</option>';
+                semSelect.innerHTML += '<option value="5">Sem 5</option>';
+                semSelect.disabled = false;
+            }
+        }
+
+        // ── SM: Sem → Lab Subjects ──────────────────────────────────────
+        function loadLabSMSubjects() {
+            const y = document.getElementById('labSMYear').value;
+            const s = (y == 1) ? '1' : document.getElementById('labSMSem').value;
+            const subSelect = document.getElementById('labSubjectSel');
+
+            subSelect.innerHTML = '<option value="">Select Lab Subject</option>';
+            document.getElementById('labInfoBox').classList.add('hidden');
+            document.getElementById('labStudentSection').classList.add('hidden');
+            document.getElementById('labStudentTableBody').innerHTML = '';
+
+            if (!y || !s) { subSelect.disabled = true; return; }
+
+            let labSubjects = [];
+            if (currentUserType === 'admin') {
+                Object.keys(SUBJECTS).forEach(code => {
+                    if (isLabSubject(code) && isSubjectForYearSem(code, y, s)) labSubjects.push(code);
+                });
+            } else {
+                Object.keys(FACULTY_MAP).forEach(code => {
+                    if (FACULTY_MAP[code] === currentUser && isLabSubject(code) && isSubjectForYearSem(code, y, s))
+                        labSubjects.push(code);
+                });
+            }
+
+            if (labSubjects.length === 0) {
+                subSelect.innerHTML = '<option value="">No Lab subjects for this Semester</option>';
+                subSelect.disabled = true;
+                return;
+            }
+            labSubjects.sort().forEach(code => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = `${code} – ${getSubjectName(code)}`;
+                subSelect.appendChild(opt);
+            });
+            subSelect.disabled = false;
+        }
+
+        /** SM: subject change */
         function onLabSubjectChange() {
             const code = document.getElementById('labSubjectSel').value;
+            const y = document.getElementById('labSMYear').value;
+            const s = (y == 1) ? '1' : document.getElementById('labSMSem').value;
             const infoBox = document.getElementById('labInfoBox');
             document.getElementById('labStudentSection').classList.add('hidden');
             document.getElementById('labAssessMsg').classList.add('hidden');
-
             if (!code) { infoBox.classList.add('hidden'); return; }
-
-            // Derive year/sem from subject code numbering (same as isSubjectForYearSem)
-            const num = parseInt(code.replace('CM-', ''));
-            const prefix = Math.floor(num / 100);
-            // prefix → year/sem mapping used in this codebase:
-            // 1xx → Year1/Sem1, 3xx → Year2/Sem3, 4xx → Year2/Sem4, 5xx → Year3/Sem5
-            let year = '', sem = '';
-            if (prefix === 1)      { year = '1'; sem = '1'; }
-            else if (prefix === 3) { year = '2'; sem = '3'; }
-            else if (prefix === 4) { year = '2'; sem = '4'; }
-            else if (prefix === 5) { year = '3'; sem = '5'; }
-
-            _labSubjectCode = code;
-            _labSubjectName = getSubjectName(code);
-            _labYear   = year;
-            _labSem    = sem;
-            _labBranch = 'Computer Engineering';
-
-            const yearLabel = year === '1' ? '1st Year' : year === '2' ? '2nd Year' : '3rd Year';
-            const semLabel  = year === '1' ? 'Sem 1' : `Sem ${sem}`;
-
+            _labSubjectCode = code; _labSubjectName = getSubjectName(code);
+            _labYear = y; _labSem = s; _labBranch = 'Computer Engineering';
+            const yearLabel = y === '1' ? '1st Year' : y === '2' ? '2nd Year' : '3rd Year';
+            const semLabel = y === '1' ? 'Year-wise Course' : `Sem ${s}`;
             infoBox.innerHTML = `<strong>Subject:</strong> ${code} – ${_labSubjectName} &nbsp;|&nbsp;
                 <strong>Class:</strong> ${yearLabel}, ${semLabel} &nbsp;|&nbsp;
                 <strong>Branch:</strong> ${_labBranch}`;
             infoBox.classList.remove('hidden');
         }
 
-        /** Loads students for the selected lab subject and renders the avg-marks table. */
-        function loadLabStudents() {
+        /** SM: split-mode toggle — clear student list so user must reload */
+        function onSMSplitToggle() {
+            _smSplitCache = {};
+            document.getElementById('labStudentSection').classList.add('hidden');
+            document.getElementById('labStudentTableBody').innerHTML = '';
+            document.getElementById('labAssessMsg').classList.add('hidden');
+        }
+
+        /**
+         * Safe value getter — returns default when input is empty, NaN, or out-of-range.
+         * Does NOT modify the input element; purely reads a safe value.
+         * @param {HTMLInputElement} input
+         * @param {number} defaultValue
+         * @param {number} max
+         */
+        function getValue(input, defaultValue, max) {
+            if (!input || input.value === '') return defaultValue;
+            const v = parseInt(input.value, 10);
+            if (isNaN(v) || v < 0 || v > max) return defaultValue;
+            return v;
+        }
+
+        /**
+         * Real-time border validation — red border on invalid, green-focus on valid.
+         * Leverages the .mark-input CSS class.
+         * @param {HTMLInputElement} input
+         * @param {number} max
+         */
+        function validateInput(input, max) {
+            if (!input) return true;
+            if (input.value === '') {
+                input.classList.remove('invalid');
+                return true;
+            }
+            const v = parseInt(input.value, 10);
+            if (isNaN(v) || v < 0 || v > max) {
+                input.classList.add('invalid');
+                return false;
+            }
+            input.classList.remove('invalid');
+            return true;
+        }
+
+        /** Split total marks (0-40) into CIA + IA with realistic variation */
+        function splitCIAIA(marks) {
+            function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+            function rand(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+            let cia = marks / 2 + rand(-2, 2);
+            cia = clamp(Math.round(cia), 0, 20);
+            let ia = marks - cia;
+            if (ia > 20) { ia = 20; cia = marks - ia; }
+            if (cia > 20) { cia = 20; ia = marks - cia; }
+            return { cia, ia };
+        }
+
+        /** Live update CIA/IA labels in NO-mode rows */
+        function updateSMSplitDisplay(idx) {
+            const mInp = document.getElementById('smMarks_' + idx);
+            const marks = getValue(mInp, 35, 40);   // uses placeholder default when empty
+            const result = splitCIAIA(marks);        // called ONCE here
+            _smSplitCache[idx] = result;             // store — Excel will read this
+            const cEl = document.getElementById('smCIALabel_' + idx);
+            const iEl = document.getElementById('smIALabel_' + idx);
+            if (cEl) cEl.textContent = result.cia;
+            if (iEl) iEl.textContent = result.ia;
+        }
+
+        /** SM: load students — renders YES or NO mode rows, auto-fetches saved marks */
+        async function loadLabStudents() {
             const code = document.getElementById('labSubjectSel').value;
             if (!code) { alert('Please select a Lab Subject.'); return; }
-            if (!_labYear || !_labSem) { alert('Could not determine Year/Sem for selected subject.'); return; }
-
+            _labYear = document.getElementById('labSMYear').value;
+            _labSem = (_labYear == 1) ? '1' : document.getElementById('labSMSem').value;
+            if (!_labYear || !_labSem) { alert('Could not determine Year/Sem.'); return; }
+            const ay = (document.getElementById('labAcadYear').value || '').trim();
             const students = STUDENTS[_labYear]?.[_labSem] || [];
-            if (students.length === 0) {
-                alert('No students found for this Year/Semester. Please ensure student data is loaded.');
-                return;
-            }
-
+            if (students.length === 0) { alert('No students found for this Year/Semester.'); return; }
             _labStudents = students;
 
+            // Fetch saved SM marks from Firestore (non-blocking if AY missing)
+            const savedData = ay ? await _labLoadSavedData(code, ay) : {};
+
+            const splitYes = document.getElementById('smSplitYes').checked;
+            // Update hint text
+            const hint = document.getElementById('smTableHint');
+            if (hint) hint.textContent = splitYes
+                ? 'Enter CIA Avg (0–20) and IA Avg (0–20). Total = CIA + IA.'
+                : 'Enter total Marks (0–40). CIA and IA are auto-calculated.';
+            // Update table header
+            const hdr = document.getElementById('smTableHeader');
+            const ths = 'padding:10px 8px;border:1px solid rgba(255,255,255,0.3);text-align:center;';
+            if (splitYes) {
+                hdr.innerHTML = `<th style="${ths}">Sl.No</th><th style="${ths}">PIN</th>
+                    <th style="${ths}text-align:left;">Name</th>
+                    <th style="${ths}">CIA Avg (20)</th>
+                    <th style="${ths}">IA Avg (20)</th>
+                    <th style="${ths}background:rgba(0,0,0,0.15);">Total (40)</th>`;
+            } else {
+                hdr.innerHTML = `<th style="${ths}">Sl.No</th><th style="${ths}">PIN</th>
+                    <th style="${ths}text-align:left;">Name</th>
+                    <th style="${ths}">CIA (20)</th>
+                    <th style="${ths}">IA (20)</th>
+                    <th style="${ths}background:rgba(0,0,0,0.15);">Marks (40)</th>`;
+            }
             const tbody = document.getElementById('labStudentTableBody');
             tbody.innerHTML = '';
+            const tdS = 'padding:9px 8px;border:1px solid #ddd;';
             students.forEach((st, idx) => {
+                const saved = savedData[st.pin] || {};
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #eee';
-                tr.innerHTML = `
-                    <td style="padding:9px 8px;border:1px solid #ddd;text-align:center;">${idx + 1}</td>
-                    <td style="padding:9px 8px;border:1px solid #ddd;">${st.pin}</td>
-                    <td style="padding:9px 8px;border:1px solid #ddd;">${st.name}</td>
-                    <td style="padding:9px 8px;border:1px solid #ddd;text-align:center;">
-                        <input type="number"
-                               id="labAvg_${idx}"
-                               data-pin="${st.pin}"
-                               value="15"
-                               min="0" max="20"
-                               style="width:70px;padding:6px;text-align:center;border:1px solid #ccc;border-radius:4px;">
-                    </td>`;
+                if (splitYes) {
+                    tr.innerHTML = `
+                        <td style="${tdS}text-align:center;">${idx + 1}</td>
+                        <td style="${tdS}text-align:center;">${st.pin}</td>
+                        <td style="${tdS}">${st.name}</td>
+                        <td style="${tdS}text-align:center;">
+                            <input type="number" id="labCIAAvg_${idx}" data-pin="${st.pin}" placeholder="15" min="0" max="20"
+                                inputmode="numeric" pattern="[0-9]*" class="mark-input"
+                                oninput="updateSMTotal(${idx})" style="width:70px;">
+                        </td>
+                        <td style="${tdS}text-align:center;">
+                            <input type="number" id="labIAAvg_${idx}" data-pin="${st.pin}" placeholder="15" min="0" max="20"
+                                inputmode="numeric" pattern="[0-9]*" class="mark-input"
+                                oninput="updateSMTotal(${idx})" style="width:70px;">
+                        </td>
+                        <td style="${tdS}text-align:center;font-weight:700;color:#2d9d86;">
+                            <span id="smTotal_${idx}">30</span>
+                        </td>`;
+                    // Attach validation + focus-select + pre-fill + auto-save (SM YES mode)
+                    setTimeout(() => {
+                        const cInp = document.getElementById('labCIAAvg_' + idx);
+                        const iInp = document.getElementById('labIAAvg_' + idx);
+                        // Pre-fill from saved data — SM YES fields only
+                        if (saved.CIA != null) { cInp.value = saved.CIA; }
+                        if (saved.IA != null) { iInp.value = saved.IA; }
+                        updateSMTotal(idx);
+                        const doSaveSM = () => {
+                            if (!ay) return;
+                            const cia = getValue(cInp, 15, 20);
+                            const ia = getValue(iInp, 15, 20);
+                            // SM YES: save CIA, IA, SM_Total only (do NOT touch SM_Total_Only)
+                            _labSaveStudent(code, ay, st.pin, { name: st.name, CIA: cia, IA: ia, SM_Total: cia + ia });
+                        };
+                        if (cInp) { cInp.addEventListener('input', () => { validateInput(cInp, 20); updateSMTotal(idx); doSaveSM(); }); cInp.addEventListener('focus', () => cInp.select()); }
+                        if (iInp) { iInp.addEventListener('input', () => { validateInput(iInp, 20); updateSMTotal(idx); doSaveSM(); }); iInp.addEventListener('focus', () => iInp.select()); }
+                    }, 0);
+                } else {
+                    // Pre-fill: use saved SM_Total_Only if available (SM NO mode), else default 35
+                    const savedMarks = saved.SM_Total_Only != null ? saved.SM_Total_Only : null;
+                    const dfVal = savedMarks !== null ? savedMarks : 35;
+                    const df = splitCIAIA(dfVal);
+                    _smSplitCache[idx] = df;      // cache the initial split
+                    tr.innerHTML = `
+                        <td style="${tdS}text-align:center;">${idx + 1}</td>
+                        <td style="${tdS}text-align:center;">${st.pin}</td>
+                        <td style="${tdS}">${st.name}</td>
+                        <td style="${tdS}text-align:center;font-weight:600;color:#2a5298;">
+                            <span id="smCIALabel_${idx}">${df.cia}</span>
+                        </td>
+                        <td style="${tdS}text-align:center;font-weight:600;color:#2a5298;">
+                            <span id="smIALabel_${idx}">${df.ia}</span>
+                        </td>
+                        <td style="${tdS}text-align:center;">
+                            <input type="number" id="smMarks_${idx}" data-pin="${st.pin}" placeholder="35" min="0" max="40"
+                                inputmode="numeric" pattern="[0-9]*" class="mark-input"
+                                oninput="updateSMSplitDisplay(${idx})" style="width:70px;">`
+                        + (savedMarks !== null ? `` : ``) +
+                        `</td>`;
+                    // Attach validation + focus-select + pre-fill + auto-save
+                    setTimeout(() => {
+                        const mInp = document.getElementById('smMarks_' + idx);
+                        if (savedMarks !== null && mInp) { mInp.value = savedMarks; updateSMSplitDisplay(idx); }
+                        const doSaveSMno = () => {
+                            if (!ay) return;
+                            const m = getValue(mInp, 35, 40);
+                            const cached = _smSplitCache[idx] || splitCIAIA(m);
+                            // SM NO: save SM_Total_Only only (do NOT touch CIA/IA/SM_Total)
+                            _labSaveStudent(code, ay, st.pin, { name: st.name, SM_Total_Only: m });
+                        };
+                        if (mInp) { mInp.addEventListener('input', () => { validateInput(mInp, 40); doSaveSMno(); }); mInp.addEventListener('focus', () => mInp.select()); }
+                    }, 0);
+                }
                 tbody.appendChild(tr);
             });
-
             document.getElementById('labStudentSection').classList.remove('hidden');
             document.getElementById('labAssessMsg').classList.add('hidden');
         }
 
-        // ── Mark generation helpers ──────────────────────────────────────
+        function updateSMTotal(idx) {
+            const cInp = document.getElementById('labCIAAvg_' + idx);
+            const iInp = document.getElementById('labIAAvg_' + idx);
+            const cia = getValue(cInp, 15, 20);
+            const ia = getValue(iInp, 15, 20);
+            document.getElementById('smTotal_' + idx).textContent = cia + ia;
+        }
+
+        // ── SM Excel (3 sheets: CIA | IA | SM Total) ─────────────────────
+
+        function _noOfIAAssessments(year) { return year === '1' ? 3 : 2; }
+
+        // ── Missing helpers for generateSMExcel ─────────────────────────
 
         /**
-         * Generate a pseudo-random-but-deterministic mark for a student/experiment.
-         * Variation is ±2 around the faculty-supplied average, clamped to [10, 20].
+         * Generate N experiment totals (each 10–20) whose sum EXACTLY equals avg × N.
+         * Uses iterative round-robin adjustment — identical to the reference algorithm.
          */
-        function getSmartMark(avgMark, studentPin, expNo, facultyId) {
-            // Convert facultyId string to a numeric seed via char codes
-            let facNum = 0;
-            for (let i = 0; i < facultyId.length; i++) facNum += facultyId.charCodeAt(i);
+        function generateExperimentMarks(avg, nExp) {
+            function rand(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+            const MIN_EXP = 10, MAX_EXP = 20;
+            const target = avg * nExp;
 
-            // Convert PIN to numeric seed
-            let pinNum = 0;
-            for (let i = 0; i < String(studentPin).length; i++) pinNum += String(studentPin).charCodeAt(i);
+            // Step 1 – initial values with ±2 variation, clamped to [10,20]
+            const marks = [];
+            for (let i = 0; i < nExp; i++) {
+                let v = avg + rand(-2, 2);
+                v = Math.max(MIN_EXP, Math.min(MAX_EXP, v));
+                marks.push(v);
+            }
 
-            const variationSeed = pinNum * 37 + expNo * 13 + facNum * 101;
-            const random = (Math.sin(variationSeed) + 1) / 2; // 0 → 1
+            // Step 2 – iterative round-robin adjustment until sum === target
+            let diff = target - marks.reduce((a, b) => a + b, 0);
+            while (diff !== 0) {
+                for (let i = 0; i < nExp && diff !== 0; i++) {
+                    if (diff > 0 && marks[i] < MAX_EXP) { marks[i]++; diff--; }
+                    else if (diff < 0 && marks[i] > MIN_EXP) { marks[i]--; diff++; }
+                }
+            }
 
-            // variation range: -2 to +2
-            let variation = Math.floor(random * 5) - 2;
-            let mark = avgMark + variation;
-
-            if (mark > 20) mark = 20;
-            if (mark < 10) mark = 10;
-
-            return mark;
+            // Step 3 – shuffle to avoid monotone pattern
+            for (let i = marks.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [marks[i], marks[j]] = [marks[j], marks[i]];
+            }
+            return { marks, finalTotal: target };
         }
 
         /**
-         * Split a total mark (out of 20) into 5 criteria.
-         * C1+C2+C3 ≈ 45 %, C4 ≈ 25 %, C5 = remainder.
+         * Distribute a residual difference across C1–C5 (maxes [3,3,3,5,6]).
+         * Spreads changes across MULTIPLE criteria to keep values realistic.
+         */
+        function adjustCriteria(c1, c2, c3, c4, c5, total) {
+            const maxes = [3, 3, 3, 5, 6];
+            const mins = [0, 0, 0, 0, 0];
+            const arr = [c1, c2, c3, c4, c5];
+            // Distribute in reverse priority (C5→C4→C3→C2→C1) to keep natural feel
+            const order = [4, 3, 2, 1, 0];
+            for (let pass = 0; pass < 20; pass++) {
+                let diff = total - arr.reduce((a, b) => a + b, 0);
+                if (diff === 0) break;
+                for (const i of order) {
+                    if (diff === 0) break;
+                    if (diff > 0) {
+                        const can = maxes[i] - arr[i];
+                        const add = Math.min(diff, can);
+                        arr[i] += add; diff -= add;
+                    } else {
+                        const can = arr[i] - mins[i];
+                        const sub = Math.min(-diff, can);
+                        arr[i] -= sub; diff += sub;
+                    }
+                }
+            }
+            // Apply dependency corrections after balancing
+            // C3 ≤ C2 + 1
+            if (arr[2] > arr[1] + 1) arr[2] = arr[1] + 1;
+            // C4 ≤ C3 × 2, capped at 5
+            arr[3] = Math.min(arr[3], Math.min(5, arr[2] * 2));
+            // C5 ≤ C4 + 1
+            arr[4] = Math.min(arr[4], arr[3] + 1);
+            return { c1: arr[0], c2: arr[1], c3: arr[2], c4: arr[3], c5: arr[4] };
+        }
+
+        /**
+         * Split one experiment total (10–20) into C1(3)+C2(3)+C3(3)+C4(5)+C5(6).
+         * Uses performance-level ranges and dependency rules:
+         *   C3 ≤ C2 + 1  |  C4 ≤ C3×2 (max 5)  |  C5 ≤ C4 + 1
          */
         function splitCriteria(total) {
-            let c1 = Math.round(total * 0.15); // max ~3
-            let c2 = Math.round(total * 0.15);
-            let c3 = Math.round(total * 0.15);
-            let c4 = Math.round(total * 0.25); // max ~5
-            let c5 = total - (c1 + c2 + c3 + c4);
-            return { c1, c2, c3, c4, c5 };
+            function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+            function rand(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+
+            // Determine performance level
+            const level = total >= 16 ? 'HIGH' : total >= 12 ? 'MEDIUM' : 'LOW';
+
+            // Range tables per level: [min, max]
+            const ranges = {
+                HIGH: { c1: [3, 3], c2: [2, 3], c3: [2, 3], c4: [4, 5], c5: [4, 6] },
+                MEDIUM: { c1: [2, 3], c2: [2, 3], c3: [2, 3], c4: [3, 4], c5: [3, 5] },
+                LOW: { c1: [2, 3], c2: [1, 2], c3: [1, 2], c4: [2, 3], c5: [2, 4] }
+            }[level];
+
+            // Pick initial values from ranges
+            let c1 = rand(ranges.c1[0], ranges.c1[1]);
+            let c2 = rand(ranges.c2[0], ranges.c2[1]);
+            let c3 = rand(ranges.c3[0], ranges.c3[1]);
+            let c4 = rand(ranges.c4[0], ranges.c4[1]);
+            let c5 = rand(ranges.c5[0], ranges.c5[1]);
+
+            // Apply dependency constraints
+            c3 = Math.min(c3, c2 + 1);                  // C3 ≤ C2 + 1
+            c4 = Math.min(c4, Math.min(5, c3 * 2));     // C4 ≤ C3×2, max 5
+            c5 = Math.min(c5, c4 + 1);                  // C5 ≤ C4 + 1
+
+            // Add ±1 variation to avoid identical patterns
+            c2 = clamp(c2 + rand(-1, 1), ranges.c2[0], ranges.c2[1]);
+            c3 = clamp(c3 + rand(-1, 1), ranges.c3[0], ranges.c3[1]);
+            c4 = clamp(c4 + rand(-1, 1), ranges.c4[0], ranges.c4[1]);
+            c5 = clamp(c5 + rand(-1, 1), ranges.c5[0], ranges.c5[1]);
+
+            // Re-apply dependency constraints after variation
+            c3 = Math.min(c3, c2 + 1);
+            c4 = Math.min(c4, Math.min(5, c3 * 2));
+            c5 = Math.min(c5, c4 + 1);
+
+            // Clamp to absolute maxima
+            c1 = clamp(c1, 0, 3);
+            c2 = clamp(c2, 0, 3);
+            c3 = clamp(c3, 0, 3);
+            c4 = clamp(c4, 0, 5);
+            c5 = clamp(c5, 0, 6);
+
+            // Final balance: adjust so sum === total
+            return adjustCriteria(c1, c2, c3, c4, c5, total);
         }
 
-        // ── Excel generation ─────────────────────────────────────────────
+        function calculateFinalAverage(grandTotal, nExp) {
+            // grandTotal is already exactly avg × nExp (integer), so integer division is exact.
+            return Math.round(grandTotal / nExp);
+        }
 
-        async function generateLabAssessmentExcel() {
-            // ── Validate inputs ──
-            const academicYear   = document.getElementById('labAcadYear').value.trim();
-            const totalExpInput  = parseInt(document.getElementById('labTotalExp').value, 10);
+        // ────────────────────────────────────────────────────────────────
 
+        function generateIAMarks(iaAvg, noOfAssessments) {
+            function rand(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+            function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+            const finalTotal = iaAvg * noOfAssessments;
+            const base = Math.floor(finalTotal / noOfAssessments);
+            const rem = finalTotal % noOfAssessments;
+            const a = [];
+            for (let i = 0; i < noOfAssessments; i++) a.push(i < rem ? base + 1 : base);
+            for (let i = 0; i < a.length; i++) a[i] = clamp(a[i] + rand(-1, 1), 10, 20);
+            const cur = a.reduce((x, y) => x + y, 0);
+            a[a.length - 1] = clamp(a[a.length - 1] + (finalTotal - cur), 10, 20);
+            return a;
+        }
+
+        function splitIA(total) {
+            function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+            function rand(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+            let ia1 = 4;
+            if (total >= 16) ia1 = 5;
+            if (total <= 11 && Math.random() < 0.2) ia1 = 3;
+            let remaining = total - ia1;
+            let ia2 = clamp(Math.round(remaining * 0.5 + rand(-1, 1)), 3, 8);
+            let ia3 = remaining - ia2;
+            ia3 = clamp(ia3, 2, 7);
+            if (ia1 + ia2 + ia3 !== total) ia3 = clamp(ia3 + (total - ia1 - ia2 - ia3), 2, 7);
+            return { ia1, ia2, ia3 };
+        }
+
+        function _makeStyledSheet(aoa, headerRows) {
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            const nc = aoa[0].length;
+            for (let R = 0; R < aoa.length; R++) for (let C = 0; C < nc; C++) {
+                const addr = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!ws[addr]) ws[addr] = { v: '', t: 's' };
+                const isH = headerRows.includes(R);
+                ws[addr].s = {
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                    font: { bold: isH || R < 4, sz: R < 5 ? 11 : 10 },
+                    border: {
+                        top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } },
+                        left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } }
+                    },
+                    fill: isH && R >= (headerRows[headerRows.length - 2] || 5)
+                        ? { fgColor: { rgb: 'D0E4FF' }, patternType: 'solid' }
+                        : (R < 4 ? { fgColor: { rgb: 'EEF2FF' }, patternType: 'solid' } : undefined)
+                };
+            }
+            return ws;
+        }
+
+        // Returns 6 header rows; row 3 = Sub Code | Subject, row 4 = Class | Branch
+        // Each row is full-width merged by the caller for rows 0-2;
+        // rows 3 and 4 are half-width merged (left-half and right-half) by the caller.
+        function _smHeaderRows(subCode, subName, classLabel, branch, ay, nc) {
+            const e = () => new Array(nc).fill('');
+            const half = Math.floor(nc / 2);
+            const r0 = e(); r0[0] = 'GOVERNMENT POLYTECHNIC DHARMAVARAM (170)';
+            const r1 = e(); r1[0] = 'DIPLOMA IN COMPUTER ENGINEERING';
+            const r2 = e(); r2[0] = `A.Y: ${ay}`;
+            const r3 = e(); r3[0] = `Sub Code: ${subCode}`; r3[half] = `Subject: ${subName}`;
+            const r4 = e(); r4[0] = `Class: ${classLabel}`; r4[half] = `Branch: ${branch}`;
+            return [r0, r1, r2, r3, r4, e()];
+        }
+
+        // Helper: build the standard merge array for header rows in an SM/PM sheet.
+        // nc = total number of columns.
+        // Returns merges for rows 0-2 (full width), rows 3-4 (left-half and right-half).
+        function _smHeaderMerges(nc) {
+            const half = Math.floor(nc / 2);
+            const m = [];
+            [0, 1, 2].forEach(r => m.push({ s: { r, c: 0 }, e: { r, c: nc - 1 } }));
+            // Row 3: left half for Sub Code, right half for Subject
+            m.push({ s: { r: 3, c: 0 }, e: { r: 3, c: half - 1 } });
+            m.push({ s: { r: 3, c: half }, e: { r: 3, c: nc - 1 } });
+            // Row 4: left half for Class, right half for Branch
+            m.push({ s: { r: 4, c: 0 }, e: { r: 4, c: half - 1 } });
+            m.push({ s: { r: 4, c: half }, e: { r: 4, c: nc - 1 } });
+            return m;
+        }
+
+        async function generateSMExcel() {
+            const ay = document.getElementById('labAcadYear').value.trim();
+            const nEx = parseInt(document.getElementById('labTotalExp').value, 10);
             if (!_labSubjectCode) { alert('Please select a Lab Subject.'); return; }
-            if (!academicYear)    { alert('Please select Academic Year (A.Y).'); return; }
-            if (!totalExpInput || totalExpInput < 1 || totalExpInput > 40) {
-                alert('Number of experiments must be between 1 and 40.');
+            if (!ay) { alert('Please enter Academic Year.'); return; }
+            if (!nEx || nEx < 1 || nEx > 40) { alert('Experiments must be 1–40.'); return; }
+            if (!_labStudents.length) { alert('Please load students first.'); return; }
+
+            const subCode = _labSubjectCode, subName = _labSubjectName;
+            const yL = _labYear === '1' ? '1st Year' : _labYear === '2' ? '2nd Year' : '3rd Year';
+            const sL = _labYear === '1' ? 'Sem 1' : `Sem ${_labSem}`;
+            const clsLbl = `${yL} – ${sL}`, br = _labBranch;
+            const noIA = _noOfIAAssessments(_labYear);
+
+            const ciaAvgs = {}, iaAvgs = {};
+            const splitYes = document.getElementById('smSplitYes').checked;
+            _labStudents.forEach((st, i) => {
+                if (splitYes) {
+                    const c = getValue(document.getElementById('labCIAAvg_' + i), 15, 20);
+                    const ia = getValue(document.getElementById('labIAAvg_' + i), 15, 20);
+                    ciaAvgs[st.pin] = c; iaAvgs[st.pin] = ia;
+                } else {
+                    const mInp = document.getElementById('smMarks_' + i);
+                    const m = getValue(mInp, 35, 40);
+                    // Re-cache split if empty (placeholder default used)
+                    if (!_smSplitCache[i] || mInp.value === '') _smSplitCache[i] = splitCIAIA(m);
+                    const cached = _smSplitCache[i];
+                    ciaAvgs[st.pin] = cached.cia; iaAvgs[st.pin] = cached.ia;
+                }
+            });
+
+            // ── CIA Sheet ──
+            const CPE = 6, FC = 2, cT = FC + nEx * CPE + 2;
+            const ce = () => new Array(cT).fill('');
+            const ciaData = _labStudents.map(st => {
+                const avg = ciaAvgs[st.pin] ?? 15;
+                const { marks, finalTotal } = generateExperimentMarks(avg, nEx);
+                return {
+                    pin: st.pin, name: st.name,
+                    exps: marks.map(t => ({ ...splitCriteria(t), total: t })),
+                    grandTotal: finalTotal, avg: calculateFinalAverage(finalTotal, nEx)
+                };
+            });
+            // CIA sheet: header rows (6) + col-header rows (rows 6,7 = S.No/Exp/criteria)
+            const cHdrs = _smHeaderRows(subCode, subName, clsLbl, br, ay, cT);
+            const cR6 = ce(); cR6[0] = 'S.No'; cR6[1] = 'PIN';
+            for (let e = 0; e < nEx; e++) cR6[FC + e * CPE] = `Exp ${e + 1}`;
+            cR6[cT - 2] = 'Grand Total'; cR6[cT - 1] = 'Avg';
+            const cR7 = ce();
+            for (let e = 0; e < nEx; e++) { const b = FC + e * CPE; cR7[b] = 'C1'; cR7[b + 1] = 'C2'; cR7[b + 2] = 'C3'; cR7[b + 3] = 'C4'; cR7[b + 4] = 'C5'; cR7[b + 5] = 'Total'; }
+            const cAoa = [...cHdrs, cR6, cR7];
+            ciaData.forEach((sd, i) => {
+                const r = ce(); r[0] = i + 1; r[1] = sd.pin;
+                sd.exps.forEach((ex, e) => { const b = FC + e * CPE; r[b] = ex.c1; r[b + 1] = ex.c2; r[b + 2] = ex.c3; r[b + 3] = ex.c4; r[b + 4] = ex.c5; r[b + 5] = ex.total; });
+                r[cT - 2] = sd.grandTotal; r[cT - 1] = sd.avg; cAoa.push(r);
+            });
+            const wsC = _makeStyledSheet(cAoa, [0, 1, 2, 3, 4, 6, 7]);
+            const cM = [..._smHeaderMerges(cT)];
+            // col-header merges: row 6 = S.No span, PIN span, Exp spans, Grand Total, Avg
+            cM.push({ s: { r: 6, c: 0 }, e: { r: 7, c: 0 } }); cM.push({ s: { r: 6, c: 1 }, e: { r: 7, c: 1 } });
+            for (let e = 0; e < nEx; e++) { const b = FC + e * CPE; cM.push({ s: { r: 6, c: b }, e: { r: 6, c: b + CPE - 1 } }); }
+            cM.push({ s: { r: 6, c: cT - 2 }, e: { r: 7, c: cT - 2 } }); cM.push({ s: { r: 6, c: cT - 1 }, e: { r: 7, c: cT - 1 } });
+            wsC['!merges'] = cM;
+            const wC = [{ wch: 6 }, { wch: 10 }]; for (let e = 0; e < nEx; e++)for (let c = 0; c < CPE; c++)wC.push({ wch: 7 });
+            wC.push({ wch: 12 }); wC.push({ wch: 8 }); wsC['!cols'] = wC;
+
+            // ── IA Sheet ──
+            const IC = 4, iT = 2 + noIA * IC + 1;
+            const ie = () => new Array(iT).fill('');
+            const iaData = _labStudents.map(st => {
+                const avg = iaAvgs[st.pin] ?? 15;
+                const tots = generateIAMarks(avg, noIA);
+                const assesses = tots.map(t => ({ ...splitIA(t), total: t }));
+                return { pin: st.pin, assesses, avg: Math.round(tots.reduce((a, b) => a + b, 0) / noIA) };
+            });
+            // IA sheet: 6 header rows + col-header rows (rows 6,7)
+            const iHdrs = _smHeaderRows(subCode, subName, clsLbl, br, ay, iT);
+            const iR6 = ie(); iR6[0] = 'S.No'; iR6[1] = 'PIN';
+            for (let a = 0; a < noIA; a++) iR6[2 + a * IC] = `Assessment ${a + 1}`;
+            iR6[iT - 1] = 'IA Avg';
+            const iR7 = ie();
+            for (let a = 0; a < noIA; a++) { const b = 2 + a * IC; iR7[b] = 'IA01(5)'; iR7[b + 1] = 'IA02(8)'; iR7[b + 2] = 'IA03(7)'; iR7[b + 3] = 'Total(20)'; }
+            const iAoa = [...iHdrs, iR6, iR7];
+            iaData.forEach((sd, i) => {
+                const r = ie(); r[0] = i + 1; r[1] = sd.pin;
+                sd.assesses.forEach((a, j) => { const b = 2 + j * IC; r[b] = a.ia1; r[b + 1] = a.ia2; r[b + 2] = a.ia3; r[b + 3] = a.total; });
+                r[iT - 1] = sd.avg; iAoa.push(r);
+            });
+            const wsI = _makeStyledSheet(iAoa, [0, 1, 2, 3, 4, 6, 7]);
+            const iM = [..._smHeaderMerges(iT)];
+            iM.push({ s: { r: 6, c: 0 }, e: { r: 7, c: 0 } }); iM.push({ s: { r: 6, c: 1 }, e: { r: 7, c: 1 } });
+            for (let a = 0; a < noIA; a++) { const b = 2 + a * IC; iM.push({ s: { r: 6, c: b }, e: { r: 6, c: b + IC - 1 } }); }
+            iM.push({ s: { r: 6, c: iT - 1 }, e: { r: 7, c: iT - 1 } });
+            wsI['!merges'] = iM;
+            wsI['!cols'] = [{ wch: 6 }, { wch: 10 }, ...Array(noIA * IC).fill({ wch: 9 }), { wch: 9 }];
+
+            // ── SM Total Sheet (6 header rows + 1 col-header row)
+            const smH = _smHeaderRows(subCode, subName, clsLbl, br, ay, 5);
+            const smAoa = [...smH, ['Sl.No', 'PIN', 'CIA (20)', 'IA (20)', 'Total (40)']];
+            _labStudents.forEach((st, i) => {
+                const cia = ciaData[i].avg, ia = iaData[i].avg;
+                smAoa.push([i + 1, st.pin, cia, ia, cia + ia]);
+            });
+            const wsS = _makeStyledSheet(smAoa, [0, 1, 2, 3, 4, 6]);
+            wsS['!merges'] = [..._smHeaderMerges(5), { s: { r: 6, c: 0 }, e: { r: 6, c: 0 } }];
+            wsS['!cols'] = [{ wch: 6 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsC, 'CIA');
+            XLSX.utils.book_append_sheet(wb, wsI, 'IA');
+            XLSX.utils.book_append_sheet(wb, wsS, 'SM Summary');
+            const fn = `${subCode}-SM.xlsx`;
+            XLSX.writeFile(wb, fn);
+            const m = document.getElementById('labAssessMsg');
+            m.textContent = `✅ Downloaded: ${fn} (CIA | IA | SM Summary)`;
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.add('hidden'), 6000);
+        }
+
+        // ══ PM MODULE ═══════════════════════════════════════════════════
+
+        function initPMSubjectDropdown() {
+            // Reset PM dropdowns
+            const pmYear = document.getElementById('labPMYear');
+            const pmSem = document.getElementById('labPMSem');
+            const pmSub = document.getElementById('pmSubjectSel');
+            if (pmYear) pmYear.value = '';
+            if (pmSem) { pmSem.innerHTML = '<option value="">Select Year first</option>'; pmSem.disabled = true; }
+            if (pmSub) { pmSub.innerHTML = '<option value="">Select Semester first</option>'; pmSub.disabled = true; }
+            document.getElementById('pmInfoBox').classList.add('hidden');
+            document.getElementById('pmStudentSection').classList.add('hidden');
+        }
+
+        // ── PM: Year → Sem cascade ──────────────────────────────────────
+        function updateLabPMSem() {
+            const y = document.getElementById('labPMYear').value;
+            const semSelect = document.getElementById('labPMSem');
+            const subSelect = document.getElementById('pmSubjectSel');
+
+            subSelect.innerHTML = '<option value="">Select Semester first</option>';
+            subSelect.disabled = true;
+            document.getElementById('pmInfoBox').classList.add('hidden');
+            document.getElementById('pmStudentSection').classList.add('hidden');
+            document.getElementById('pmStudentTableBody').innerHTML = '';
+
+            if (!y) {
+                semSelect.innerHTML = '<option value="">Select Year first</option>';
+                semSelect.disabled = true;
                 return;
             }
-            if (_labStudents.length === 0) { alert('Please load students first.'); return; }
-
-            const totalExp   = totalExpInput;
-            const subCode    = _labSubjectCode;
-            const subName    = _labSubjectName;
-            const yearLabel  = _labYear === '1' ? '1st Year' : _labYear === '2' ? '2nd Year' : '3rd Year';
-            const semLabel   = _labYear === '1' ? 'Sem 1' : `Sem ${_labSem}`;
-            const classLabel = `${yearLabel} – ${semLabel}`;
-            const branch     = _labBranch;
-
-            // ── Collect avg marks from inputs ──
-            const avgMarks = {}; // pin → avgMark
-            const inputs = document.querySelectorAll('#labStudentTableBody input[type="number"]');
-            let valid = true;
-            inputs.forEach(inp => {
-                const pin = inp.dataset.pin;
-                const val = parseInt(inp.value, 10);
-                if (isNaN(val) || val < 0 || val > 20) {
-                    alert(`Invalid avg mark for PIN ${pin}. Must be 0–20.`);
-                    valid = false;
-                }
-                avgMarks[pin] = val;
-            });
-            if (!valid) return;
-
-            // ── Build data matrix ──
-            // Per student: for each experiment, compute total & criteria split
-            // studentsData[i] = { pin, name, exps: [{c1,c2,c3,c4,c5,total}, ...], grandTotal }
-            const studentsData = _labStudents.map(st => {
-                const avg  = avgMarks[st.pin] ?? 15;
-                let grandTotal = 0;
-                const exps = [];
-                for (let e = 1; e <= totalExp; e++) {
-                    const total = getSmartMark(avg, st.pin, e, currentUser);
-                    const cr    = splitCriteria(total);
-                    grandTotal += total;
-                    exps.push({ ...cr, total });
-                }
-                return { pin: st.pin, name: st.name, exps, grandTotal };
-            });
-
-            // ── Build SheetJS AOA (array-of-arrays) ──
-            // Row 0: Institution
-            // Row 1: Course
-            // Row 2: A.Y
-            // Row 3: Subject info
-            // Row 4: blank spacer
-            // Row 5: Header level 1  (S.No | PIN | Exp1 (×6) | Exp2 (×6) | ... | Grand Total)
-            // Row 6: Header level 2  (     |     | C1|C2|C3|C4|C5|Total | ... | )
-            // Row 7+: Data rows
-
-            const COLS_PER_EXP = 6; // C1 C2 C3 C4 C5 Total
-            const FIXED_COLS   = 2; // S.No, PIN
-            const totalCols    = FIXED_COLS + totalExp * COLS_PER_EXP + 1; // +1 Grand Total
-
-            // Helper: build an empty row array of correct length
-            const emptyRow = () => new Array(totalCols).fill('');
-
-            const aoa = [];
-
-            // Row 0 – Institution
-            const r0 = emptyRow(); r0[0] = 'GOVERNMENT POLYTECHNIC DHARMAVARAM (170)';
-            aoa.push(r0);
-
-            // Row 1 – Course
-            const r1 = emptyRow(); r1[0] = 'DIPLOMA IN COMPUTER ENGINEERING';
-            aoa.push(r1);
-
-            // Row 2 – AY
-            const r2 = emptyRow(); r2[0] = `A.Y: ${academicYear}`;
-            aoa.push(r2);
-
-            // Row 3 – Subject / Class / Branch
-            const r3 = emptyRow();
-            r3[0] = `Sub Code: ${subCode}`;
-            r3[2] = `Subject: ${subName}`;
-            r3[4] = `Class: ${classLabel}`;
-            r3[6] = `Branch: ${branch}`;
-            aoa.push(r3);
-
-            // Row 4 – blank spacer
-            aoa.push(emptyRow());
-
-            // Row 5 – Experiment header row (merged spans handled via merge array)
-            const r5 = emptyRow();
-            r5[0] = 'S.No';
-            r5[1] = 'PIN';
-            for (let e = 0; e < totalExp; e++) {
-                r5[FIXED_COLS + e * COLS_PER_EXP] = `Exp ${e + 1}`;
+            if (y == 1) {
+                semSelect.innerHTML = '<option value="1">Year-wise Course</option>';
+                semSelect.disabled = true;
+                semSelect.value = '1';
+                loadLabPMSubjects();
+            } else if (y == 2) {
+                semSelect.innerHTML = '<option value="">Select Semester</option>';
+                semSelect.innerHTML += '<option value="3">Sem 3</option>';
+                semSelect.innerHTML += '<option value="4">Sem 4</option>';
+                semSelect.disabled = false;
+            } else if (y == 3) {
+                semSelect.innerHTML = '<option value="">Select Semester</option>';
+                semSelect.innerHTML += '<option value="5">Sem 5</option>';
+                semSelect.disabled = false;
             }
-            r5[totalCols - 1] = 'Grand Total';
-            aoa.push(r5);
+        }
 
-            // Row 6 – Criteria sub-header
-            const r6 = emptyRow();
-            r6[0] = '';
-            r6[1] = '';
-            for (let e = 0; e < totalExp; e++) {
-                const base = FIXED_COLS + e * COLS_PER_EXP;
-                r6[base + 0] = 'C1';
-                r6[base + 1] = 'C2';
-                r6[base + 2] = 'C3';
-                r6[base + 3] = 'C4';
-                r6[base + 4] = 'C5';
-                r6[base + 5] = 'Total';
-            }
-            r6[totalCols - 1] = '';
-            aoa.push(r6);
+        // ── PM: Sem → Lab Subjects ──────────────────────────────────────
+        function loadLabPMSubjects() {
+            const y = document.getElementById('labPMYear').value;
+            const s = (y == 1) ? '1' : document.getElementById('labPMSem').value;
+            const subSelect = document.getElementById('pmSubjectSel');
 
-            // Rows 7+ – Student data
-            studentsData.forEach((sd, idx) => {
-                const row = emptyRow();
-                row[0] = idx + 1;
-                row[1] = sd.pin;
-                sd.exps.forEach((ex, e) => {
-                    const base = FIXED_COLS + e * COLS_PER_EXP;
-                    row[base + 0] = ex.c1;
-                    row[base + 1] = ex.c2;
-                    row[base + 2] = ex.c3;
-                    row[base + 3] = ex.c4;
-                    row[base + 4] = ex.c5;
-                    row[base + 5] = ex.total;
+            subSelect.innerHTML = '<option value="">Select Lab Subject</option>';
+            document.getElementById('pmInfoBox').classList.add('hidden');
+            document.getElementById('pmStudentSection').classList.add('hidden');
+            document.getElementById('pmStudentTableBody').innerHTML = '';
+
+            if (!y || !s) { subSelect.disabled = true; return; }
+
+            let labSubjects = [];
+            if (currentUserType === 'admin') {
+                Object.keys(SUBJECTS).forEach(code => {
+                    if (isLabSubject(code) && isSubjectForYearSem(code, y, s)) labSubjects.push(code);
                 });
-                row[totalCols - 1] = sd.grandTotal;
-                aoa.push(row);
+            } else {
+                Object.keys(FACULTY_MAP).forEach(code => {
+                    if (FACULTY_MAP[code] === currentUser && isLabSubject(code) && isSubjectForYearSem(code, y, s))
+                        labSubjects.push(code);
+                });
+            }
+
+            if (labSubjects.length === 0) {
+                subSelect.innerHTML = '<option value="">No Lab subjects for this Semester</option>';
+                subSelect.disabled = true;
+                return;
+            }
+            labSubjects.sort().forEach(code => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = `${code} – ${getSubjectName(code)}`;
+                subSelect.appendChild(opt);
             });
+            subSelect.disabled = false;
+        }
 
-            // ── Create worksheet ──
-            const ws = XLSX.utils.aoa_to_sheet(aoa);
+        function onPMSubjectChange() {
+            const code = document.getElementById('pmSubjectSel').value;
+            const y = document.getElementById('labPMYear').value;
+            const s = (y == 1) ? '1' : document.getElementById('labPMSem').value;
+            const ib = document.getElementById('pmInfoBox');
+            document.getElementById('pmStudentSection').classList.add('hidden');
+            if (!code) { ib.classList.add('hidden'); return; }
+            _pmSubjectCode = code; _pmSubjectName = getSubjectName(code);
+            _pmYear = y; _pmSem = s; _pmBranch = 'Computer Engineering';
+            const yL = y === '1' ? '1st Year' : y === '2' ? '2nd Year' : '3rd Year';
+            const sL = y === '1' ? 'Year-wise Course' : `Sem ${s}`;
+            ib.innerHTML = `<strong>Subject:</strong> ${code} – ${_pmSubjectName} &nbsp;|&nbsp;
+                <strong>Class:</strong> ${yL}, ${sL} &nbsp;|&nbsp; <strong>Branch:</strong> ${_pmBranch}`;
+            ib.classList.remove('hidden');
+        }
 
-            // ── Merges ──
-            const merges = [];
-
-            // Row 0: institution title → merge across all columns
-            merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } });
-            // Row 1: course title
-            merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: totalCols - 1 } });
-            // Row 2: AY
-            merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: totalCols - 1 } });
-
-            // Row 5 (header): S.No spans rows 5–6, PIN spans rows 5–6
-            const HDR1 = 5, HDR2 = 6;
-            merges.push({ s: { r: HDR1, c: 0 }, e: { r: HDR2, c: 0 } }); // S.No
-            merges.push({ s: { r: HDR1, c: 1 }, e: { r: HDR2, c: 1 } }); // PIN
-
-            // Each Exp header spans 6 columns horizontally
-            for (let e = 0; e < totalExp; e++) {
-                const base = FIXED_COLS + e * COLS_PER_EXP;
-                merges.push({ s: { r: HDR1, c: base }, e: { r: HDR1, c: base + COLS_PER_EXP - 1 } });
+        async function onVivaToggle() {
+            if (_pmStudents.length > 0) {
+                const ay = (document.getElementById('pmAcadYear').value || '').trim();
+                const savedData = ay ? await _labLoadSavedData(_pmSubjectCode, ay) : {};
+                _buildPMTable(savedData);
             }
-            // Grand Total header spans rows 5–6
-            merges.push({ s: { r: HDR1, c: totalCols - 1 }, e: { r: HDR2, c: totalCols - 1 } });
+        }
 
-            ws['!merges'] = merges;
 
-            // ── Column widths ──
-            const wscols = [];
-            wscols.push({ wch: 6 });  // S.No
-            wscols.push({ wch: 10 }); // PIN
-            for (let e = 0; e < totalExp; e++) {
-                for (let c = 0; c < COLS_PER_EXP; c++) wscols.push({ wch: 7 });
+        async function loadPMStudents() {
+            const code = document.getElementById('pmSubjectSel').value;
+            if (!code) { alert('Please select a Lab Subject.'); return; }
+            _pmYear = document.getElementById('labPMYear').value;
+            _pmSem = (_pmYear == 1) ? '1' : document.getElementById('labPMSem').value;
+            if (!_pmYear || !_pmSem) { alert('Could not determine Year/Sem.'); return; }
+            const students = STUDENTS[_pmYear]?.[_pmSem] || [];
+            if (!students.length) { alert('No students found.'); return; }
+            _pmStudents = students;
+            const ay = (document.getElementById('pmAcadYear').value || '').trim();
+            const savedData = ay ? await _labLoadSavedData(code, ay) : {};
+            _buildPMTable(savedData);
+        }
+
+        function _buildPMTable(savedData) {
+            savedData = savedData || {};
+            const code = _pmSubjectCode;
+            const ay = (document.getElementById('pmAcadYear').value || '').trim();
+            const vivaSep = document.getElementById('pmVivaYes').checked;
+            document.getElementById('pmTableHint').textContent = vivaSep
+                ? 'Enter Marks (0–50) and Viva (0–10). Total = Marks + Viva.'
+                : 'Enter total Marks (0–60). Viva is included.';
+            const hdr = document.getElementById('pmTableHeader');
+            const thStyle = 'padding:10px 8px;border:1px solid rgba(255,255,255,0.3);text-align:center;';
+            if (vivaSep) {
+                hdr.innerHTML = `<th style="${thStyle}">Sl.No</th><th style="${thStyle}">PIN</th>
+                    <th style="${thStyle}text-align:left;">Name</th>
+                    <th style="${thStyle}">Marks (Max 50)</th>
+                    <th style="${thStyle}">Viva (Max 10)</th>
+                    <th style="${thStyle}background:rgba(0,0,0,0.15);">Total (60)</th>`;
+            } else {
+                hdr.innerHTML = `<th style="${thStyle}">Sl.No</th><th style="${thStyle}">PIN</th>
+                    <th style="${thStyle}text-align:left;">Name</th>
+                    <th style="${thStyle}">Marks (Max 60)</th>`;
             }
-            wscols.push({ wch: 12 }); // Grand Total
-            ws['!cols'] = wscols;
+            const tbody = document.getElementById('pmStudentTableBody');
+            tbody.innerHTML = '';
+            _pmStudents.forEach((st, idx) => {
+                const saved = savedData[st.pin] || {};
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #eee';
+                const td = 'padding:9px 8px;border:1px solid #ddd;';
+                if (vivaSep) {
+                    tr.innerHTML = `<td style="${td}text-align:center;">${idx + 1}</td>
+                        <td style="${td}text-align:center;">${st.pin}</td>
+                        <td style="${td}">${st.name}</td>
+                        <td style="${td}text-align:center;">
+                            <input type="number" id="pmMarks_${idx}" data-pin="${st.pin}" placeholder="40" min="0" max="50"
+                                inputmode="numeric" pattern="[0-9]*" class="mark-input"
+                                oninput="updatePMTotal(${idx})" style="width:70px;">
+                        </td>
+                        <td style="${td}text-align:center;">
+                            <input type="number" id="pmViva_${idx}" data-pin="${st.pin}" placeholder="7" min="0" max="10"
+                                inputmode="numeric" pattern="[0-9]*" class="mark-input"
+                                oninput="updatePMTotal(${idx})" style="width:60px;">
+                        </td>
+                        <td style="${td}text-align:center;font-weight:700;color:#2d9d86;">
+                            <span id="pmTotal_${idx}">47</span></td>`;
+                    // Attach validation + focus-select + pre-fill + auto-save (PM YES mode)
+                    setTimeout(() => {
+                        const mInp = document.getElementById('pmMarks_' + idx);
+                        const vInp = document.getElementById('pmViva_' + idx);
+                        // Pre-fill from saved data — PM YES fields only
+                        if (saved.PM_Marks_50 != null) { mInp.value = saved.PM_Marks_50; }
+                        if (saved.PM_Viva_10 != null) { vInp.value = saved.PM_Viva_10; }
+                        updatePMTotal(idx);
+                        const doSavePMyes = () => {
+                            if (!ay) return;
+                            const m = getValue(mInp, 40, 50);
+                            const v = getValue(vInp, 7, 10);
+                            // PM YES: save PM_Marks_50, PM_Viva_10, PM_Total_60 (do NOT touch PM_Total_Only_60)
+                            _labSaveStudent(code, ay, st.pin, { name: st.name, PM_Marks_50: m, PM_Viva_10: v, PM_Total_60: m + v });
+                        };
+                        if (mInp) { mInp.addEventListener('input', () => { validateInput(mInp, 50); updatePMTotal(idx); doSavePMyes(); }); mInp.addEventListener('focus', () => mInp.select()); }
+                        if (vInp) { vInp.addEventListener('input', () => { validateInput(vInp, 10); updatePMTotal(idx); doSavePMyes(); }); vInp.addEventListener('focus', () => vInp.select()); }
+                    }, 0);
+                } else {
+                    tr.innerHTML = `<td style="${td}text-align:center;">${idx + 1}</td>
+                        <td style="${td}text-align:center;">${st.pin}</td>
+                        <td style="${td}">${st.name}</td>
+                        <td style="${td}text-align:center;">
+                            <input type="number" id="pmMarks_${idx}" data-pin="${st.pin}" placeholder="45" min="0" max="60"
+                                inputmode="numeric" pattern="[0-9]*" class="mark-input"
+                                style="width:70px;">
+                        </td>`;
+                    // Attach validation + focus-select + pre-fill + auto-save (PM NO mode)
+                    setTimeout(() => {
+                        const mInp = document.getElementById('pmMarks_' + idx);
+                        // Pre-fill from saved data — PM NO field only
+                        if (saved.PM_Total_Only_60 != null && mInp) { mInp.value = saved.PM_Total_Only_60; }
+                        const doSavePMno = () => {
+                            if (!ay) return;
+                            const m = getValue(mInp, 45, 60);
+                            // PM NO: save PM_Total_Only_60 only (do NOT touch PM_Marks_50/PM_Viva_10/PM_Total_60)
+                            _labSaveStudent(code, ay, st.pin, { name: st.name, PM_Total_Only_60: m });
+                        };
+                        if (mInp) { mInp.addEventListener('input', () => { validateInput(mInp, 60); doSavePMno(); }); mInp.addEventListener('focus', () => mInp.select()); }
+                    }, 0);
+                }
+                tbody.appendChild(tr);
+            });
+            document.getElementById('pmStudentSection').classList.remove('hidden');
+            document.getElementById('pmAssessMsg').classList.add('hidden');
+        }
 
-            // ── Cell styles ──
-            // Apply bold + center + border to header rows
-            const XLSX_FULL = XLSX; // alias
-            const headerRows = [0, 1, 2, 3, HDR1, HDR2];
-            const ref = ws['!ref'] || `A1:${XLSX.utils.encode_col(totalCols - 1)}${aoa.length}`;
-            ws['!ref'] = ref;
+        function updatePMTotal(idx) {
+            const mInp = document.getElementById('pmMarks_' + idx);
+            const vInp = document.getElementById('pmViva_' + idx);
+            const m = getValue(mInp, 40, 50);
+            const v = vInp ? getValue(vInp, 7, 10) : 0;
+            document.getElementById('pmTotal_' + idx).textContent = m + v;
+        }
 
-            // Apply styles via cell iteration (xlsx.full.min.js supports basic styles in xlsx format)
-            for (let R = 0; R < aoa.length; R++) {
-                for (let C = 0; C < totalCols; C++) {
-                    const addr = XLSX.utils.encode_cell({ r: R, c: C });
-                    if (!ws[addr]) ws[addr] = { v: '', t: 's' };
-                    const isHeader = headerRows.includes(R);
-                    ws[addr].s = {
-                        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-                        font: { bold: isHeader || R < 4, sz: R < 5 ? 11 : 10 },
-                        border: {
-                            top:    { style: 'thin', color: { rgb: '000000' } },
-                            bottom: { style: 'thin', color: { rgb: '000000' } },
-                            left:   { style: 'thin', color: { rgb: '000000' } },
-                            right:  { style: 'thin', color: { rgb: '000000' } }
-                        },
-                        fill: isHeader && R >= HDR1
-                            ? { fgColor: { rgb: 'D0E4FF' }, patternType: 'solid' }
-                            : (R < 4 ? { fgColor: { rgb: 'EEF2FF' }, patternType: 'solid' } : undefined)
-                    };
+        /**
+         * Split PM marks (0-50, no viva) across C1(max5), C2(max5), C3(max5),
+         * C4(max10), C5(max15), C6(max10). Guarantees sum === total.
+         */
+        /**
+         * Split PM marks (0-50, no viva) across C1(max5), C2(max5), C3(max5),
+         * C4(max10), C5(max15), C6(max10). Guarantees sum === total.
+         *
+         * Criteria meaning:
+         *   C1: Entry Behaviour       (max 5)
+         *   C2: Equipment Knowledge   (max 5)
+         *   C3: Exp. Setup Knowledge  (max 5)
+         *   C4: Skill in Setup        (max 10)  — depends on C2+C3
+         *   C5: Success in Experiment (max 15)  — depends on C4
+         *   C6: Record Writing        (max 10)  — semi-independent
+         *
+         * Dependency rules:
+         *   C4 ≤ floor((C2+C3) × 1.2)   (skill ≤ theory)
+         *   C5 ≤ C4 + 3                  (success ≤ skill + small chance)
+         */
+        function splitPM50(total) {
+            function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+            function rand(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+
+            // ── Step 1: Determine performance level ──
+            const level = total >= 45 ? 'high' : total >= 35 ? 'medium' : 'low';
+
+            // ── Step 2: Range-based initial assignment ──
+            let c1, c2, c3, c4, c5, c6;
+            if (level === 'high') {
+                c1 = rand(4, 5);
+                c2 = rand(4, 5);
+                c3 = rand(4, 5);
+                c4 = rand(7, 10);
+                c5 = rand(10, 15);
+                c6 = rand(7, 10);
+            } else if (level === 'medium') {
+                c1 = rand(3, 5);
+                c2 = rand(3, 4);
+                c3 = rand(3, 4);
+                c4 = rand(5, 7);
+                c5 = rand(7, 10);
+                c6 = rand(5, 8);
+            } else {
+                c1 = rand(3, 4);
+                c2 = rand(2, 3);
+                c3 = rand(2, 3);
+                c4 = rand(3, 5);
+                c5 = rand(4, 7);
+                c6 = rand(4, 6);
+            }
+
+            // ── Step 3: Enforce dependency rules ──
+            // C4: skill cannot greatly exceed theoretical knowledge (C2+C3)
+            const maxC4ByTheory = Math.floor((c2 + c3) * 1.2);
+            if (c4 > maxC4ByTheory) c4 = clamp(maxC4ByTheory, 2, 10);
+
+            // C5: success cannot be high if skill (C4) is low
+            if (c5 > c4 + 3) c5 = clamp(c4 + rand(1, 3), 3, 15);
+
+            // ── Step 4: Iterative balancing — guarantees exact total ──
+            const maxes = [5, 5, 5, 10, 15, 10];
+            const mins = [1, 1, 1, 2, 3, 2];
+            let arr = [c1, c2, c3, c4, c5, c6];
+            // Clamp all within hard limits first
+            arr = arr.map((v, i) => clamp(v, mins[i], maxes[i]));
+            let diff = total - arr.reduce((a, b) => a + b, 0);
+            // Adjust C6 first (most independent), then ripple outward
+            const order = [5, 4, 3, 2, 1, 0];
+            for (let pass = 0; pass < 20 && diff !== 0; pass++) {
+                for (const i of order) {
+                    if (diff === 0) break;
+                    const adj = diff > 0
+                        ? Math.min(diff, maxes[i] - arr[i])
+                        : Math.max(diff, mins[i] - arr[i]);
+                    arr[i] += adj; diff -= adj;
                 }
             }
+            const [rc1, rc2, rc3, rc4, rc5, rc6] = arr;
+            return { c1: rc1, c2: rc2, c3: rc3, c4: rc4, c5: rc5, c6: rc6 };
+        }
 
-            // ── Workbook ──
+        /**
+         * Split PM marks (0-60, viva included) across C1(max5), C2(max5), C3(max5),
+         * C4(max10), C5(max15), C6(max10), Viva(max10). Guarantees sum === total.
+         */
+        function splitPM60(total) {
+            function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+            function rand(mn, mx) { return Math.floor(Math.random() * (mx - mn + 1)) + mn; }
+            const maxes = [5, 5, 5, 10, 15, 10];
+            const mins = [1, 1, 1, 2, 3, 2];
+            // 🎯 Performance-based viva: strong students earn higher viva marks
+            let baseViva;
+            if (total >= 55) baseViva = 9;
+            else if (total >= 50) baseViva = 8;
+            else if (total >= 45) baseViva = 7;
+            else if (total >= 40) baseViva = 6;
+            else if (total >= 35) baseViva = 5;
+            else if (total >= 30) baseViva = 4;
+            else baseViva = 3;
+            let viva = clamp(baseViva + rand(-1, 1), 2, 10);
+            let rem = total - viva;
+            // Proportional split of remaining marks across C1-C6
+            const arr = maxes.map((mx, i) =>
+                clamp(Math.round(rem * mx / 50) + rand(-1, 1), mins[i], mx));
+            // Balance C1-C6 to sum == rem
+            let diff = rem - arr.reduce((a, b) => a + b, 0);
+            for (let pass = 0; pass < 20 && diff !== 0; pass++) {
+                for (let i = arr.length - 1; i >= 0 && diff !== 0; i--) {
+                    const adj = diff > 0
+                        ? Math.min(diff, maxes[i] - arr[i])
+                        : Math.max(diff, mins[i] - arr[i]);
+                    arr[i] += adj; diff -= adj;
+                }
+            }
+            // If C1-C6 balancing absorbed some of viva's share, fix viva
+            const cSum = arr.reduce((a, b) => a + b, 0);
+            viva = clamp(total - cSum, 2, 10);
+            const [c1, c2, c3, c4, c5, c6] = arr;
+            return { c1, c2, c3, c4, c5, c6, viva };
+        }
+
+        async function generatePMExcel() {
+            const ay = document.getElementById('pmAcadYear').value.trim();
+            if (!_pmSubjectCode) { alert('Please select a Lab Subject.'); return; }
+            if (!ay) { alert('Please enter Academic Year.'); return; }
+            if (!_pmStudents.length) { alert('Please load students first.'); return; }
+
+            const vivaSep = document.getElementById('pmVivaYes').checked;
+            const subCode = _pmSubjectCode, subName = _pmSubjectName;
+            const yL = _pmYear === '1' ? '1st Year' : _pmYear === '2' ? '2nd Year' : '3rd Year';
+            const sL = _pmYear === '1' ? 'Sem 1' : `Sem ${_pmSem}`;
+            const clsLbl = `${yL} – ${sL}`, br = _pmBranch;
+
+            const mArr = [], vArr = [];
+            _pmStudents.forEach((st, i) => {
+                if (vivaSep) {
+                    // PM YES: read from PM_Marks_50 inputs
+                    const m = getValue(document.getElementById('pmMarks_' + i), 40, 50);
+                    const v = getValue(document.getElementById('pmViva_' + i), 7, 10);
+                    mArr.push(m); vArr.push(v);
+                } else {
+                    // PM NO: read from PM_Total_Only_60 input
+                    const m = getValue(document.getElementById('pmMarks_' + i), 45, 60);
+                    mArr.push(m); vArr.push(null);
+                }
+            });
+
+            const pmData = _pmStudents.map((st, i) => {
+                const m = mArr[i];
+                if (vivaSep) {
+                    const v = vArr[i];
+                    const s = splitPM50(m);
+                    // splitPM50 guarantees c1+c2+c3+c4+c5+c6 === m
+                    return { pin: st.pin, name: st.name, ...s, viva: v, total: m + v };
+                } else {
+                    const s = splitPM60(m);
+                    const { c1, c2, c3, c4, c5, c6, viva } = s;
+                    // splitPM60 guarantees c1+c2+c3+c4+c5+c6+viva === m
+                    return { pin: st.pin, name: st.name, c1, c2, c3, c4, c5, c6, viva, total: m };
+                }
+            });
+
+            // PM sheet: 6 header rows + 1 col-header row (row 6)
+            const nc_pm = 11;
+            const pmHdrs = _smHeaderRows(subCode, subName, clsLbl, br, ay, nc_pm);
+            const pmHdr = ['Sl.No', 'PIN', 'Name', 'C1(5)', 'C2(5)', 'C3(5)', 'C4(10)', 'C5(15)', 'C6(10)', 'Viva(10)', 'Total(60)'];
+            const pmAoa = [...pmHdrs, pmHdr];
+            pmData.forEach((sd, i) => pmAoa.push([i + 1, sd.pin, sd.name, sd.c1, sd.c2, sd.c3, sd.c4, sd.c5, sd.c6, sd.viva, sd.total]));
+            const wsP = _makeStyledSheet(pmAoa, [0, 1, 2, 3, 4, 6]);
+            wsP['!merges'] = [..._smHeaderMerges(nc_pm)];
+            wsP['!cols'] = [{ wch: 6 }, { wch: 10 }, { wch: 22 }, { wch: 7 }, { wch: 7 }, { wch: 7 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 9 }, { wch: 10 }];
+
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Lab Assessment');
-
-            const fileName = `${subCode}_${academicYear}_Lab_Assessment.xlsx`;
-            XLSX.writeFile(wb, fileName);
-
-            // ── Success message ──
-            const msgEl = document.getElementById('labAssessMsg');
-            msgEl.textContent = `✅ Downloaded: ${fileName}`;
-            msgEl.classList.remove('hidden');
-            setTimeout(() => msgEl.classList.add('hidden'), 5000);
+            XLSX.utils.book_append_sheet(wb, wsP, 'PM');
+            const fn = `${subCode}-PM.xlsx`;
+            XLSX.writeFile(wb, fn);
+            const m2 = document.getElementById('pmAssessMsg');
+            m2.textContent = `✅ Downloaded: ${fn}`;
+            m2.classList.remove('hidden');
+            setTimeout(() => m2.classList.add('hidden'), 6000);
         }
 
         // ─────────────────────────────────────────────────────────────
+
+        // ══════════════════════════════════════════════════════════════
+        //  12-HOUR ANALOG CLOCK TIME PICKER
+        // ══════════════════════════════════════════════════════════════
+        (function () {
+            let _targetInputId = null;   // 'ecTimeFrom' | 'ecTimeTo'
+            let _tpHour = 8;             // 1-12
+            let _tpMinute = 0;           // 0-59
+            let _tpAmPm = 'AM';          // 'AM' | 'PM'
+            let _tpMode = 'H';           // 'H' | 'M'
+            let _dragging = false;
+
+            // ── Public openers ──
+            window.openTimePicker = function (inputId) {
+                _targetInputId = inputId;
+                // Pre-fill from existing value if any
+                const existing = document.getElementById(inputId).value;
+                if (existing) {
+                    const m = existing.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                    if (m) {
+                        _tpHour = parseInt(m[1]);
+                        _tpMinute = parseInt(m[2]);
+                        _tpAmPm = m[3].toUpperCase();
+                    }
+                } else {
+                    // Defaults based on which field
+                    const session = document.querySelector('input[name="ecSession"]:checked')?.value || 'FN';
+                    if (inputId === 'ecTimeFrom') {
+                        _tpHour = session === 'FN' ? 8 : 4; _tpMinute = session === 'FN' ? 30 : 30;
+                        _tpAmPm = session === 'FN' ? 'AM' : 'PM';
+                    } else {
+                        _tpHour = session === 'FN' ? 9 : 5; _tpMinute = session === 'FN' ? 30 : 30;
+                        _tpAmPm = session === 'FN' ? 'AM' : 'PM';
+                    }
+                }
+                _tpMode = 'H';
+                document.getElementById('ecTpTitle').textContent =
+                    inputId === 'ecTimeFrom' ? 'Set From Time' : 'Set To Time';
+                document.getElementById('ecTimePickerOverlay').style.display = 'block';
+                document.getElementById('ecTimePickerModal').style.display = 'block';
+                _tpUpdateUI();
+            };
+
+            window.closeTimePicker = function () {
+                document.getElementById('ecTimePickerOverlay').style.display = 'none';
+                document.getElementById('ecTimePickerModal').style.display = 'none';
+            };
+
+            window.confirmTimePicker = function () {
+                if (!_targetInputId) { closeTimePicker(); return; }
+                const minStr = String(_tpMinute).padStart(2, '0');
+                const val = `${_tpHour}:${minStr} ${_tpAmPm}`;
+                document.getElementById(_targetInputId).value = val;
+                closeTimePicker();
+            };
+
+            window.ecSetAmPm = function (ap) {
+                _tpAmPm = ap;
+                _tpUpdateUI();
+            };
+
+            window.ecTpSetMode = function (mode) {
+                _tpMode = mode;
+                _tpUpdateUI();
+            };
+
+            // ── Canvas interaction ──
+            function _getAngleFromEvent(e, canvas) {
+                const rect = canvas.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                const dx = clientX - cx;
+                const dy = clientY - cy;
+                let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+                if (angle < 0) angle += 360;
+                return angle;
+            }
+
+            function _applyAngle(angle) {
+                if (_tpMode === 'H') {
+                    let h = Math.round(angle / 30) % 12;
+                    if (h === 0) h = 12;
+                    _tpHour = h;
+                } else {
+                    const m = Math.round(angle / 6) % 60;
+                    _tpMinute = m < 0 ? m + 60 : m;
+                }
+                _tpUpdateUI();
+            }
+
+            window.ecClockDown = function (e) { _dragging = true; _applyAngle(_getAngleFromEvent(e, e.target)); };
+            window.ecClockMove = function (e) { if (_dragging) _applyAngle(_getAngleFromEvent(e, e.target)); };
+            window.ecClockUp = function () { _dragging = false; if (_tpMode === 'H') { _tpMode = 'M'; _tpUpdateUI(); } };
+            window.ecClockTouchStart = function (e) { e.preventDefault(); _dragging = true; _applyAngle(_getAngleFromEvent(e, e.target)); };
+            window.ecClockTouchMove = function (e) { e.preventDefault(); if (_dragging) _applyAngle(_getAngleFromEvent(e, e.target)); };
+            window.ecClockTouchEnd = function () { _dragging = false; if (_tpMode === 'H') { _tpMode = 'M'; _tpUpdateUI(); } };
+
+            // ── Draw clock canvas ──
+            function _drawClock() {
+                const canvas = document.getElementById('ecClockCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const W = canvas.width, H = canvas.height;
+                const cx = W / 2, cy = H / 2, R = W / 2 - 8;
+                ctx.clearRect(0, 0, W, H);
+
+                // Face
+                ctx.beginPath();
+                ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+                ctx.fillStyle = '#eef3ff';
+                ctx.fill();
+                ctx.strokeStyle = '#c7d4f0';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Numbers / marks
+                const count = _tpMode === 'H' ? 12 : 12;
+                const step = _tpMode === 'H' ? 30 : 30;   // degrees per number label
+                ctx.font = 'bold 14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                for (let i = 1; i <= 12; i++) {
+                    const ang = (i * step - 90) * Math.PI / 180;
+                    const nr = R - 22;
+                    const nx = cx + nr * Math.cos(ang);
+                    const ny = cy + nr * Math.sin(ang);
+                    // Highlight: for H mode highlight selected hour; for M mode highlight nearest 5-min
+                    let isActive = false;
+                    if (_tpMode === 'H') isActive = (i === _tpHour);
+                    else isActive = (i * 5 === _tpMinute || (i === 12 && _tpMinute === 0));
+                    if (isActive) {
+                        ctx.beginPath();
+                        ctx.arc(nx, ny, 15, 0, 2 * Math.PI);
+                        ctx.fillStyle = '#2a5298';
+                        ctx.fill();
+                        ctx.fillStyle = '#fff';
+                    } else {
+                        ctx.fillStyle = '#333';
+                    }
+                    const label = _tpMode === 'H' ? i : (i * 5 === 60 ? '00' : String(i * 5).padStart(2, '0'));
+                    ctx.fillText(label, nx, ny);
+                }
+
+                // Minute tick marks (only in M mode for non-5 minutes)
+                if (_tpMode === 'M') {
+                    for (let m = 0; m < 60; m++) {
+                        if (m % 5 !== 0) {
+                            const ang = (m * 6 - 90) * Math.PI / 180;
+                            ctx.beginPath();
+                            ctx.moveTo(cx + (R - 6) * Math.cos(ang), cy + (R - 6) * Math.sin(ang));
+                            ctx.lineTo(cx + (R - 1) * Math.cos(ang), cy + (R - 1) * Math.sin(ang));
+                            ctx.strokeStyle = '#aaa';
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Hand
+                let handAngle;
+                if (_tpMode === 'H') {
+                    handAngle = (_tpHour % 12) * 30 - 90;
+                } else {
+                    handAngle = _tpMinute * 6 - 90;
+                }
+                const handR = R - 30;
+                const hx = cx + handR * Math.cos(handAngle * Math.PI / 180);
+                const hy = cy + handR * Math.sin(handAngle * Math.PI / 180);
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(hx, hy);
+                ctx.strokeStyle = '#2a5298';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+
+                // Center dot
+                ctx.beginPath();
+                ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = '#2a5298';
+                ctx.fill();
+
+                // Hand tip circle
+                ctx.beginPath();
+                ctx.arc(hx, hy, 13, 0, 2 * Math.PI);
+                ctx.fillStyle = '#2a5298';
+                ctx.fill();
+            }
+
+            function _tpUpdateUI() {
+                // Display string
+                const minStr = String(_tpMinute).padStart(2, '0');
+                document.getElementById('ecTpDisplay').textContent = `${_tpHour}:${minStr}`;
+
+                // AM/PM buttons
+                const amBtn = document.getElementById('ecTpAM');
+                const pmBtn = document.getElementById('ecTpPM');
+                if (amBtn && pmBtn) {
+                    amBtn.style.background = _tpAmPm === 'AM' ? '#2a5298' : '#fff';
+                    amBtn.style.color = _tpAmPm === 'AM' ? '#fff' : '#2a5298';
+                    pmBtn.style.background = _tpAmPm === 'PM' ? '#2a5298' : '#fff';
+                    pmBtn.style.color = _tpAmPm === 'PM' ? '#fff' : '#2a5298';
+                }
+
+                // H/M toggle buttons
+                const hBtn = document.getElementById('ecTpHourBtn');
+                const mBtn = document.getElementById('ecTpMinBtn');
+                if (hBtn && mBtn) {
+                    hBtn.style.borderColor = _tpMode === 'H' ? '#2a5298' : '#ccc';
+                    hBtn.style.color = _tpMode === 'H' ? '#2a5298' : '#555';
+                    mBtn.style.borderColor = _tpMode === 'M' ? '#2a5298' : '#ccc';
+                    mBtn.style.color = _tpMode === 'M' ? '#2a5298' : '#555';
+                }
+
+                _drawClock();
+            }
+        })();
+
+        // ─────────────────────────────────────────────────────────────
     </script>
-<!-- ── TOPIC ENTRY POPUP MODAL ─────────────────────────────────── -->
-<div id="topicPopupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99999;
+    <!-- ── TOPIC ENTRY POPUP MODAL ─────────────────────────────────── -->
+    <div id="topicPopupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99999;
      align-items:center;justify-content:center;padding:16px;">
-    <div style="background:#fff;border-radius:16px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
-        <!-- Header -->
-        <div style="background:linear-gradient(135deg,#56ab2f,#a8e063);color:white;padding:18px 22px;
+        <div
+            style="background:#fff;border-radius:16px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#56ab2f,#a8e063);color:white;padding:18px 22px;
                     border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-                <div style="font-size:16px;font-weight:700;">✅ Attendance Submitted!</div>
-                <div style="font-size:12px;opacity:0.9;margin-top:2px;">Would you like to add the topic covered?</div>
-            </div>
-            <button onclick="skipTopicEntry()"
-                style="background:rgba(255,255,255,0.2);border:none;color:white;width:30px;height:30px;
+                <div>
+                    <div style="font-size:16px;font-weight:700;">✅ Attendance Submitted!</div>
+                    <div style="font-size:12px;opacity:0.9;margin-top:2px;">Would you like to add the topic covered?
+                    </div>
+                </div>
+                <button onclick="skipTopicEntry()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:30px;height:30px;
                        border-radius:50%;font-size:18px;cursor:pointer;line-height:1;">×</button>
-        </div>
-        <!-- Body -->
-        <div style="padding:20px 22px;">
-            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#166534;">
-                <div><strong>Date:</strong> <span id="tpDate"></span></div>
-                <div><strong>Periods:</strong> <span id="tpPeriods"></span></div>
-                <div><strong>Subject:</strong> <span id="tpSubject"></span></div>
             </div>
-            <label style="font-weight:600;color:#333;display:block;margin-bottom:6px;">Topic Covered <span style="font-weight:400;color:#888;font-size:12px;">(optional)</span></label>
-            <div style="display:flex;gap:8px;align-items:flex-start;">
-                <textarea id="topicPopupInput" maxlength="120" rows="3"
-                    style="flex:1;padding:10px;border:2px solid #86efac;border-radius:8px;font-size:14px;font-family:inherit;resize:none;"
-                    placeholder="e.g., Binary Search Trees – Insertion and Deletion…"
-                    oninput="updateCharCount('topicPopupInput','topicPopupCount')"></textarea>
-                <button id="voiceBtnPopup" onclick="startVoiceInput('topicPopupInput','voiceBtnPopup')"
-                    style="padding:10px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;
+            <!-- Body -->
+            <div style="padding:20px 22px;">
+                <div
+                    style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#166534;">
+                    <div><strong>Date:</strong> <span id="tpDate"></span></div>
+                    <div><strong>Periods:</strong> <span id="tpPeriods"></span></div>
+                    <div><strong>Subject:</strong> <span id="tpSubject"></span></div>
+                </div>
+                <label style="font-weight:600;color:#333;display:block;margin-bottom:6px;">Topic Covered <span
+                        style="font-weight:400;color:#888;font-size:12px;">(optional)</span></label>
+                <div style="display:flex;gap:8px;align-items:flex-start;">
+                    <textarea id="topicPopupInput" maxlength="120" rows="3"
+                        style="flex:1;padding:10px;border:2px solid #86efac;border-radius:8px;font-size:14px;font-family:inherit;resize:none;"
+                        placeholder="e.g., Binary Search Trees – Insertion and Deletion…"
+                        oninput="updateCharCount('topicPopupInput','topicPopupCount')"></textarea>
+                    <button id="voiceBtnPopup" onclick="startVoiceInput('topicPopupInput','voiceBtnPopup')" style="padding:10px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;
                            border:none;border-radius:8px;cursor:pointer;font-size:18px;flex-shrink:0;"
-                    title="Voice Input">🎤</button>
+                        title="Voice Input">🎤</button>
+                </div>
+                <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+                    <span id="topicPopupCount">0</span> / 120 characters
+                    &nbsp;·&nbsp; Applies to all submitted periods.
+                </div>
             </div>
-            <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-                <span id="topicPopupCount">0</span> / 120 characters
-                &nbsp;·&nbsp; Applies to all submitted periods.
-            </div>
-        </div>
-        <!-- Footer -->
-        <div style="padding:0 22px 20px;display:flex;gap:10px;flex-wrap:wrap;">
-            <button onclick="saveTopicEntry()"
-                style="flex:1;padding:11px 16px;background:linear-gradient(135deg,#56ab2f,#a8e063);
-                       color:white;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">💾 Save Topic</button>
-            <button onclick="skipTopicEntry()"
-                style="flex:1;padding:11px 16px;background:#e5e7eb;color:#555;border:none;
+            <!-- Footer -->
+            <div style="padding:0 22px 20px;display:flex;gap:10px;flex-wrap:wrap;">
+                <button onclick="saveTopicEntry()" style="flex:1;padding:11px 16px;background:linear-gradient(135deg,#56ab2f,#a8e063);
+                       color:white;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">💾
+                    Save Topic</button>
+                <button onclick="skipTopicEntry()" style="flex:1;padding:11px 16px;background:#e5e7eb;color:#555;border:none;
                        border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">⏭️ Skip for Now</button>
+            </div>
         </div>
     </div>
-</div>
 
 </body>
 

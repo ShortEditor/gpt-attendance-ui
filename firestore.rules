@@ -32,6 +32,12 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // Lab Assessment (SM + PM marks per subject/AY/student)
+    match /Lab_Assessment/{subCode}/AY/{ay}/Students/{pin} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Notifications
     match /notifications/{docId} {
       allow read: if true;
