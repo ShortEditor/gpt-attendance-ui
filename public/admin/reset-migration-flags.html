@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Migration Flags — GPT Dharmavaram</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1e3c72, #2a5298); min-height: 100vh; padding: 30px 20px; }
+        .card { background: white; border-radius: 15px; padding: 35px; max-width: 680px; margin: 0 auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        h1 { color: #1e3c72; font-size: 1.6rem; margin-bottom: 8px; }
+        .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+        .info-box { background: #e7f3ff; border-left: 4px solid #2196F3; padding: 14px; border-radius: 6px; margin-bottom: 20px; font-size: 0.88rem; color: #1565c0; line-height: 1.6; }
+        .warning-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 14px; border-radius: 6px; margin-bottom: 20px; font-size: 0.88rem; color: #856404; line-height: 1.6; }
+        .steps { background: #f9f9f9; border-radius: 8px; padding: 18px; margin-bottom: 24px; }
+        .steps h3 { color: #333; margin-bottom: 12px; font-size: 0.95rem; }
+        .step { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.88rem; color: #444; align-items: flex-start; }
+        .step:last-child { border-bottom: none; }
+        .step-num { background: #2a5298; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 200px; }
+        label { display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 0.88rem; }
+        input { width: 100%; padding: 10px 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 0.95rem; }
+        input:focus { outline: none; border-color: #2a5298; }
+        .btn { padding: 12px 28px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-right: 10px; margin-bottom: 10px; }
+        .btn-primary { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 20px 0; }
+        .stat { background: #f8f9fa; border-radius: 10px; padding: 15px; text-align: center; }
+        .stat h3 { font-size: 2rem; margin-bottom: 4px; }
+        .stat.reset h3 { color: #2196F3; }
+        .stat.skipped h3 { color: #ff9800; }
+        .stat p { font-size: 0.8rem; color: #666; }
+        #logBox { background: #1a1a2e; color: #e0e0e0; border-radius: 10px; padding: 18px; max-height: 350px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; margin-top: 20px; }
+        .log-success { color: #4caf50; }
+        .log-skip { color: #ff9800; }
+        .log-error { color: #f44336; }
+        .log-info { color: #90caf9; }
+        .log-header { color: #ce93d8; font-weight: bold; }
+        #sessionStatus { font-size: 0.85rem; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; display: none; }
+        #sessionStatus.ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        #sessionStatus.none { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>🔄 Reset Migration Flags</h1>
+    <p class="subtitle">GPT Dharmavaram — Fix users who can't login after migration</p>
+
+    <div class="info-box">
+        ℹ️ <strong>What this does:</strong> Clears the <code>firebaseAuthMigrated</code> flag from all faculty Firestore documents so the migration tool can re-create their Firebase Auth accounts with a known password (<strong>123456</strong>).
+    </div>
+
+    <div class="warning-box">
+        ⚠️ <strong>You must also delete Firebase Auth accounts</strong> for the affected users in Firebase Console <em>before</em> re-running the migration — otherwise the migration will fail with "email already in use".
+    </div>
+
+    <div class="steps">
+        <h3>📋 Complete Steps:</h3>
+        <div class="step"><div class="step-num">1</div><div>Run this tool to clear Firestore migration flags for affected users</div></div>
+        <div class="step"><div class="step-num">2</div><div>Go to <strong>Firebase Console → Authentication → Users</strong> and delete the faculty accounts (NOT admin)</div></div>
+        <div class="step"><div class="step-num">3</div><div>Open <a href="/admin/migrate-to-auth.html" target="_blank"><strong>/admin/migrate-to-auth.html</strong></a></div></div>
+        <div class="step"><div class="step-num">4</div><div>Run migration with default password <strong>123456</strong></div></div>
+        <div class="step"><div class="step-num">5</div><div>Faculty login with <strong>123456</strong> → forced to change password on first login</div></div>
+    </div>
+
+    <div id="sessionStatus"></div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>Admin Username (if not already logged in)</label>
+            <input type="text" id="adminUser" value="admin">
+        </div>
+        <div class="form-group">
+            <label>Admin Password (if not already logged in)</label>
+            <input type="password" id="adminPass" placeholder="Only needed if no active session">
+        </div>
+    </div>
+
+    <button class="btn btn-primary" id="resetBtn" onclick="resetFlags()">🔄 Reset Migration Flags</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('logBox').innerHTML=''">Clear Log</button>
+
+    <div class="stats" id="statsBox" style="display:none;">
+        <div class="stat reset"><h3 id="cntReset">0</h3><p>Flags cleared</p></div>
+        <div class="stat skipped"><h3 id="cntSkip">0</h3><p>Already clear / skipped</p></div>
+    </div>
+
+    <div id="logBox"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+    firebase.initializeApp({
+        apiKey: "AIzaSyC9nMFnZGdnOm5zXgpSMKiTFpzEBTuPfRM",
+        authDomain: "gpt-dharmavaram-attendance.firebaseapp.com",
+        projectId: "gpt-dharmavaram-attendance",
+        storageBucket: "gpt-dharmavaram-attendance.firebasestorage.app",
+        messagingSenderId: "471911252737",
+        appId: "1:471911252737:web:a88dcdfafbe0307e7a1100"
+    });
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    let cntReset = 0, cntSkip = 0;
+
+    // Check for existing session on page load
+    auth.onAuthStateChanged(function(user) {
+        const statusEl = document.getElementById('sessionStatus');
+        statusEl.style.display = 'block';
+        if (user) {
+            statusEl.className = 'ok';
+            statusEl.textContent = '✅ Active session found: ' + user.email + ' — you can click Reset without entering credentials.';
+        } else {
+            statusEl.className = 'none';
+            statusEl.textContent = '⚠️ No active session — enter Admin Username and Password below before clicking Reset.';
+        }
+    });
+
+    function log(msg, type) {
+        type = type || 'info';
+        const box = document.getElementById('logBox');
+        const line = document.createElement('div');
+        line.className = 'log-' + type;
+        line.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+        box.appendChild(line);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function updateStats() {
+        document.getElementById('statsBox').style.display = 'grid';
+        document.getElementById('cntReset').textContent = cntReset;
+        document.getElementById('cntSkip').textContent = cntSkip;
+    }
+
+    async function resetFlags() {
+        if (!confirm('This will clear the firebaseAuthMigrated flag for ALL faculty users.\n\nAfter this, you must:\n1. Delete their Firebase Auth accounts in Console\n2. Re-run the migration with password 123456\n\nContinue?')) return;
+
+        const btn = document.getElementById('resetBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Processing...';
+        cntReset = cntSkip = 0;
+        updateStats();
+
+        log('═══════════════════════════════════', 'header');
+        log('Reset Migration Flags', 'header');
+        log('═══════════════════════════════════', 'header');
+
+        try {
+            // 1. Try existing session first (admin already logged in via main app)
+            let currentUser = auth.currentUser;
+
+            if (currentUser) {
+                log('✅ Using existing session: ' + currentUser.email, 'success');
+            } else {
+                // 2. No session — sign in with provided credentials
+                const adminUser = document.getElementById('adminUser').value.trim().toLowerCase();
+                const adminPass = document.getElementById('adminPass').value;
+                if (!adminUser || !adminPass) {
+                    alert('No active session found.\nPlease enter Admin Username and Password, then try again.');
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Reset Migration Flags';
+                    return;
+                }
+                log('Signing in as admin...', 'info');
+                const result = await auth.signInWithEmailAndPassword(adminUser + '@dharmavaram.com', adminPass);
+                currentUser = result.user;
+                log('✅ Signed in: ' + currentUser.email, 'success');
+            }
+
+            // Verify admin account
+            if (!currentUser.email || !currentUser.email.startsWith('admin@')) {
+                throw new Error('Only admin account can run this tool. Current user: ' + currentUser.email);
+            }
+
+            const snap = await db.collection('users').get();
+            log('Found ' + snap.size + ' user documents in Firestore', 'info');
+            log('');
+
+            for (var i = 0; i < snap.docs.length; i++) {
+                var doc = snap.docs[i];
+                var username = doc.id;
+                var data = doc.data();
+
+                // Skip admin account
+                if (data.type === 'admin') {
+                    log('⏭  ' + username + ' — admin (skipping)', 'skip');
+                    cntSkip++;
+                    updateStats();
+                    continue;
+                }
+
+                // Clear firebaseAuthMigrated flag and ensure mustChangePassword
+                await db.collection('users').doc(username).update({
+                    firebaseAuthMigrated: firebase.firestore.FieldValue.delete(),
+                    mustChangePassword: true
+                });
+                log('✅ ' + username + ' — flag cleared', 'success');
+                cntReset++;
+                updateStats();
+            }
+
+            log('');
+            log('═══════════════════════════════════', 'header');
+            log('Done! Next steps:', 'header');
+            log('1. Delete Firebase Auth accounts for faculty in Console', 'info');
+            log('2. Run /admin/migrate-to-auth.html with password: 123456', 'info');
+            log('═══════════════════════════════════', 'header');
+
+            alert('✅ Flags cleared for ' + cntReset + ' users.\n\nNow:\n1. Delete their Firebase Auth accounts in Firebase Console\n2. Re-run /admin/migrate-to-auth.html with password: 123456');
+
+        } catch (err) {
+            log('❌ ERROR: ' + err.message, 'error');
+            alert('Error: ' + err.message);
+        }
+
+        btn.disabled = false;
+        btn.textContent = '🔄 Reset Migration Flags';
+    }
+</script>
+</body>
+</html>

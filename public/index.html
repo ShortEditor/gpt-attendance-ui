@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -697,6 +697,7 @@
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 </head>
@@ -760,13 +761,6 @@
             <h1>🎓 GPT, Dharmavaram</h1>
             <p>Attendance Management System</p>
         </div>
-        <div class="form-group">
-            <label>Login Type</label>
-            <select id="loginType">
-                <option value="admin">Admin</option>
-                <option value="user">User (Faculty)</option>
-            </select>
-        </div>
         <div class="form-group" style="margin-top: 15px;">
             <label>Username</label>
             <input type="text" id="username" placeholder="Enter username">
@@ -777,6 +771,33 @@
         </div>
         <button class="btn btn-primary" onclick="login(this)" style="width: 100%; margin-top: 20px;">Login</button>
         <div id="loginError" style="color: red; margin-top: 10px; display: none;"></div>
+    </div>
+
+    <!-- CHANGE PASSWORD SCREEN (shown after login when mustChangePassword=true) -->
+    <div id="changePwdScreen" class="login-container hidden" style="max-width:430px;">
+        <div class="login-header">
+            <h1>🔒 Change Password</h1>
+            <p>GPT Dharmavaram - You must set a new password before continuing</p>
+        </div>
+        <div id="changePwdWarning" style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin-bottom:18px;border-radius:6px;color:#856404;font-size:13px;">
+            ⚠️ You must set a personal password before continuing.<br>
+            <strong>Current Password</strong> = the password you just used to login (default: <code>123456</code>)
+        </div>
+        <div id="changePwdError" style="color:red;margin-bottom:10px;display:none;"></div>
+        <div id="changePwdSuccess" style="color:green;margin-bottom:10px;display:none;"></div>
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>Current Password</label>
+            <input type="password" id="cpCurrentPass" placeholder="Your current / default password">
+        </div>
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>New Password <small style="color:#888;">(min 6 characters)</small></label>
+            <input type="password" id="cpNewPass" placeholder="Enter new password">
+        </div>
+        <div class="form-group" style="margin-bottom:20px;">
+            <label>Confirm New Password</label>
+            <input type="password" id="cpConfirmPass" placeholder="Re-enter new password">
+        </div>
+        <button class="btn btn-primary" id="cpSubmitBtn" onclick="submitChangePassword()" style="width:100%;">Set New Password</button>
     </div>
 
     <!-- MAIN APPLICATION -->
@@ -1465,8 +1486,8 @@
                         <input type="text" id="newUsername" placeholder="Username">
                     </div>
                     <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="newPassword" placeholder="Password">
+                        <label>Initial Password <small style="color:#888;">(optional, default: 123456)</small></label>
+                        <input type="password" id="newPassword" placeholder="Leave blank for default (123456)">
                     </div>
                     <div class="form-group">
                         <label>Branch</label>
@@ -2643,6 +2664,7 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();      // ── Firebase Authentication (FREE on Spark plan) ──
         const storage = firebase.storage();
 
         // ── In-memory data stores (loaded from Firestore on login) ──
@@ -2695,7 +2717,7 @@
                 const studentsSnap = await db.collection('students').get();
                 studentsSnap.forEach(doc => { STUDENTS[doc.id] = doc.data(); });
 
-                // users
+                // users (legacy settings store — kept for in-memory USERS map)
                 const usersDoc = await db.collection('settings').doc('users').get();
                 if (usersDoc.exists) {
                     const lu = usersDoc.data(); delete lu._v;
@@ -2733,16 +2755,20 @@
                 const holDoc = await db.collection('settings').doc('holidays').get();
                 if (holDoc.exists) HOLIDAYS = holDoc.data().list || [];
 
-                // Ensure admin exists in users collection (for login)
-                const adminAuthDoc = await db.collection('users').doc('admin').get();
-                if (!adminAuthDoc.exists) {
-                    await db.collection('users').doc('admin').set(USERS.admin);
-                }
+                // Load faculty profiles from users collection (post-migration)
+                const usersSnap = await db.collection('users').get();
+                usersSnap.forEach(doc => {
+                    const data = doc.data();
+                    if (data.type === 'user' && !USERS[doc.id]) {
+                        USERS[doc.id] = data;
+                    }
+                });
 
                 console.log('✅ Data loaded from Firestore');
             } catch (error) {
                 console.error('❌ Error loading from Firestore:', error);
-                alert('Error loading data from database. Check console for details.');
+                const code = error.code || error.message || 'unknown';
+                alert('Error loading data from database.\n\nError: ' + code + '\n\nTry refreshing the page (Ctrl+Shift+R).');
             }
         }
 
@@ -2781,43 +2807,47 @@
         let currentUser = null;
         let currentUserType = null;
         let currentUserName = null;
+        let currentAdminPass = '';   // ── Stored in-memory to re-auth admin after createUser ──
+        let currentFirebaseUser = null; // ── Stored Firebase user object for password-change flow ──
         let todayAttendance = {};
 
         document.getElementById('date').valueAsDate = new Date();
 
-        // ── Faculty Auto-Login: restore session on page load (NOT for admin) ──
-        let autoLoginRunning = false;
-        async function checkAutoLogin() {
-            if (autoLoginRunning) return;
-            autoLoginRunning = true;
-            const saved = localStorage.getItem('facultySession');
-            if (!saved) { autoLoginRunning = false; return; }
-            let session;
-            try { session = JSON.parse(saved); } catch (e) { localStorage.removeItem('facultySession'); autoLoginRunning = false; return; }
-            // Only restore faculty (user) sessions — admin must always login manually
-            if (!session || session.type !== 'user') { localStorage.removeItem('facultySession'); autoLoginRunning = false; return; }
+        // ── Firebase Auth State: auto-restore faculty sessions on page load ──
+        // Admin must always login manually (SESSION persistence clears on tab close)
+        auth.onAuthStateChanged(async (firebaseUser) => {
+            if (!firebaseUser || currentUser) return; // No session or already logged in
+
+            // If the change-password screen is currently visible, the user just logged in
+            // and is being forced to change their password — do NOT sign them out here,
+            // as auth.currentUser must remain valid for submitChangePassword() to work.
+            const changePwdScreen = document.getElementById('changePwdScreen');
+            if (changePwdScreen && !changePwdScreen.classList.contains('hidden')) return;
+
+            const username = firebaseUser.email.replace('@dharmavaram.com', '');
             try {
-                // Verify user still exists in Firestore
-                const userDoc = await db.collection('users').doc(session.user).get();
-                if (!userDoc.exists) { localStorage.removeItem('facultySession'); autoLoginRunning = false; return; }
+                const userDoc = await db.collection('users').doc(username).get();
+                if (!userDoc.exists) { await auth.signOut(); return; }
                 const userData = userDoc.data();
-                if (userData.type !== 'user') { localStorage.removeItem('facultySession'); autoLoginRunning = false; return; }
-                // Restore session
-                currentUser = session.user;
+                // Admin must always login manually
+                if (userData.type === 'admin') { await auth.signOut(); return; }
+                // Force re-login if password change is required (page-refresh scenario)
+                if (userData.mustChangePassword) { await auth.signOut(); return; }
+                // Restore faculty session
+                currentUser = username;
                 currentUserType = 'user';
                 currentUserName = userData.name;
-                showAdminApp(session.user, 'user', userData.name);
+                showAdminApp(username, 'user', userData.name);
                 await loadDataFromFirestore();
                 loadProfile();
                 loadTodayAttendance();
                 loadPeriodsFromDate();
+                loadNotificationsList();
             } catch (e) {
-                console.error('Auto-login failed:', e);
-                localStorage.removeItem('facultySession');
+                console.error('❌ Auto-restore failed:', e);
+                await auth.signOut();
             }
-            autoLoginRunning = false;
-        }
-        checkAutoLogin();
+        });
 
         // Populate subject codes
         const subCodeSelect = document.getElementById('subCode');
@@ -2864,8 +2894,8 @@
             if (editTbody) editTbody.innerHTML = '';
         }
 
+        // ── LOGIN ── Uses Firebase Authentication (Email/Password) ──
         async function login(loginBtn) {
-            const type = document.getElementById('loginType').value;
             const user = document.getElementById('username').value.trim().toLowerCase();
             const pass = document.getElementById('password').value;
             const errorDiv = document.getElementById('loginError');
@@ -2876,63 +2906,69 @@
                 return;
             }
 
-            // Show loading
             loginBtn.disabled = true;
             loginBtn.textContent = 'Logging in...';
             errorDiv.style.display = 'none';
 
+            // Auto-detect role: admin username = admin, everyone else = faculty
+            const type = (user === 'admin') ? 'admin' : 'user';
             try {
-                let userData = null;
+                // Convert username → internal email
+                const email = user + '@dharmavaram.com';
 
-                // Try Firestore first
-                const userDoc = await db.collection('users').doc(user).get();
-
-                if (userDoc.exists) {
-                    userData = userDoc.data();
+                // Admin: SESSION persistence (clears on tab close)
+                // Faculty: LOCAL persistence (survives page refresh)
+                if (type === 'admin') {
+                    await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
                 } else {
-                    // First-time fallback: check hardcoded admin default
-                    if (user === 'admin' && USERS['admin'] && USERS['admin'].password === pass && type === 'admin') {
-                        userData = USERS['admin'];
-                        // Seed Firestore for future logins
-                        await db.collection('users').doc('admin').set(userData);
-                    } else {
-                        errorDiv.textContent = 'Invalid username or user not found!';
-                        errorDiv.style.display = 'block';
-                        loginBtn.disabled = false;
-                        loginBtn.textContent = 'Login';
-                        return;
-                    }
+                    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 }
 
-                // Check password and type
-                if (userData.password !== pass || userData.type !== type) {
-                    errorDiv.textContent = 'Invalid credentials!';
-                    errorDiv.style.display = 'block';
+                // ── Firebase Auth sign-in ──
+                const signInResult = await auth.signInWithEmailAndPassword(email, pass);
+                currentFirebaseUser = signInResult.user; // capture immediately before onAuthStateChanged can sign out
+
+                // Fetch Firestore user doc for role + mustChangePassword
+                const userDoc = await db.collection('users').doc(user).get();
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    throw new Error('User record not found. Please contact admin.');
+                }
+                const userData = userDoc.data();
+
+                // Verify login type matches Firestore role
+                const expectedType = userData.type || 'user';
+                if (expectedType !== type) {
+                    await auth.signOut();
+                    throw new Error(`Wrong login type! Select "${expectedType === 'admin' ? 'Admin' : 'User (Faculty)'}" from dropdown.`);
+                }
+
+                // Store admin password in-memory (needed to re-auth after createUser)
+                if (type === 'admin') currentAdminPass = pass;
+                localStorage.removeItem('facultySession'); // Clean up old session storage
+
+                // ── mustChangePassword: show change-password screen ──
+                if (userData.mustChangePassword) {
+                    currentUser = user;
+                    currentUserType = type;
+                    currentUserName = userData.name;
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('changePwdScreen').classList.remove('hidden');
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'Login';
                     return;
                 }
 
-                // Login successful
+                // ── Login successful ──
                 currentUser = user;
                 currentUserType = type;
                 currentUserName = userData.name;
 
-                // Save faculty session for auto-login on next open (NOT for admin)
-                if (type === 'user') {
-                    localStorage.setItem('facultySession', JSON.stringify({ user, type, name: userData.name }));
-                }
-
                 showAdminApp(user, type, userData.name);
-
-                // Release login button right away so user knows login succeeded
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Login';
 
-                // Load all data from Firestore in background
                 await loadDataFromFirestore();
-
-                // Populate UI content after data is ready
                 if (type === 'admin') {
                     loadDashboard();
                     displaySubjects();
@@ -2945,17 +2981,129 @@
                     loadProfile();
                 }
                 loadTodayAttendance();
-                // Refresh period dropdown now that TIMETABLE data is loaded
-                // (fixes race: user may have selected year/sem before data arrived)
                 loadPeriodsFromDate();
                 loadNotificationsList();
 
             } catch (error) {
                 console.error('Login error:', error);
-                errorDiv.textContent = 'Login failed: ' + error.message;
+                let msg = error.message;
+                // Friendly messages for common Firebase Auth errors
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' ||
+                    error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email' ||
+                    error.code === 'auth/invalid-login-credentials') {
+                    msg = '❌ Incorrect username or password.\n\nIf this is your first login, use the default password: 123456\nIf you forgot your password, ask the Admin to reset it.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    msg = 'Too many failed attempts. Please try again later.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    msg = 'Network error. Check your internet connection.';
+                }
+                errorDiv.textContent = msg;
                 errorDiv.style.display = 'block';
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Login';
+            }
+        }
+
+        // ── SUBMIT CHANGE PASSWORD (in-app forced change screen) ──
+        async function submitChangePassword() {
+            const cur = document.getElementById('cpCurrentPass').value;
+            const np = document.getElementById('cpNewPass').value;
+            const cp = document.getElementById('cpConfirmPass').value;
+            const errDiv = document.getElementById('changePwdError');
+            const sucDiv = document.getElementById('changePwdSuccess');
+            const btn = document.getElementById('cpSubmitBtn');
+
+            errDiv.style.display = 'none';
+            sucDiv.style.display = 'none';
+
+            if (!cur || !np || !cp) {
+                errDiv.textContent = 'Please fill all fields';
+                errDiv.style.display = 'block';
+                return;
+            }
+            if (np.length < 6) {
+                errDiv.textContent = 'New password must be at least 6 characters';
+                errDiv.style.display = 'block';
+                return;
+            }
+            if (np !== cp) {
+                errDiv.textContent = 'New passwords do not match';
+                errDiv.style.display = 'block';
+                return;
+            }
+            if (np === '123456') {
+                errDiv.textContent = 'Please choose a different password (not the default)';
+                errDiv.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                // Use the stored Firebase user (captured at login time).
+                // auth.currentUser can be null if onAuthStateChanged signed the user out
+                // during the mustChangePassword check on page refresh.
+                const user = currentFirebaseUser || auth.currentUser;
+                if (!user) throw new Error('Session expired. Please login again.');
+
+                // Reauthenticate (validates current password)
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, cur);
+                await user.reauthenticateWithCredential(credential);
+
+                // ✅ Update Firestore FIRST while the current auth token is still valid.
+                // Doing this AFTER updatePassword() causes permission-denied because
+                // updatePassword() invalidates the old token and the new one may not
+                // be propagated to Firestore in time.
+                await db.collection('users').doc(currentUser).update({
+                    mustChangePassword: false,
+                    passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Now change the password in Firebase Auth
+                await user.updatePassword(np);
+
+                // Also update in-memory (for admin, keep currentAdminPass in sync)
+                if (currentUserType === 'admin') currentAdminPass = np;
+
+                sucDiv.textContent = '✅ Password changed! Redirecting...';
+                sucDiv.style.display = 'block';
+
+                setTimeout(async () => {
+                    // Hide change pwd screen and show the app
+                    document.getElementById('changePwdScreen').classList.add('hidden');
+                    showAdminApp(currentUser, currentUserType, currentUserName);
+                    await loadDataFromFirestore();
+                    if (currentUserType === 'admin') {
+                        loadDashboard();
+                        displaySubjects();
+                        updateTTSubjectList();
+                        displayUsers();
+                        updateMapDropdowns();
+                        displayMappings();
+                        loadSettings();
+                    } else {
+                        loadProfile();
+                    }
+                    loadTodayAttendance();
+                    loadPeriodsFromDate();
+                    loadNotificationsList();
+                }, 1500);
+
+            } catch (err) {
+                console.error('❌ submitChangePassword:', err);
+                const wrongPassCodes = [
+                    'auth/wrong-password',
+                    'auth/invalid-credential',
+                    'auth/invalid-login-credentials'  // newer Firebase SDK error code
+                ];
+                const msg = wrongPassCodes.includes(err.code)
+                    ? '❌ Current password is incorrect. Enter the password you used to login.'
+                    : '❌ ' + (err.message || err.code || 'Unknown error');
+                errDiv.textContent = msg;
+                errDiv.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Set New Password';
             }
         }
 
@@ -3540,41 +3688,76 @@
         }
 
         // USER MANAGEMENT
-        function createUser() {
+        async function createUser() {
             const name = document.getElementById('newFacultyName').value.trim();
             const username = document.getElementById('newUsername').value.trim().toLowerCase();
-            const password = document.getElementById('newPassword').value;
             const branch = document.getElementById('newFacultyBranch').value;
+            const passwordInput = document.getElementById('newPassword').value;
+            const initialPassword = passwordInput || '123456';
 
-            if (!name || !username || !password) {
-                alert('Fill all required fields');
+            if (!name || !username) {
+                alert('Fill Name and Username fields');
                 return;
             }
-
             if (!branch) {
                 alert('Please select a branch');
                 return;
             }
-
             if (USERS[username]) {
-                alert('Username exists!');
+                alert('Username already exists!');
                 return;
             }
 
-            USERS[username] = { username, password, name, type: 'user', branch };
-            saveSettings('users', USERS);
-            db.collection('users').doc(username).set(USERS[username]).catch(e => console.error('❌ Save auth user:', e));
+            const email = username + '@dharmavaram.com';
+            const msgEl = document.getElementById('userMsg');
 
-            document.getElementById('userMsg').textContent = `✓ Created: ${name}`;
-            document.getElementById('userMsg').classList.remove('hidden');
-            document.getElementById('newFacultyName').value = '';
-            document.getElementById('newUsername').value = '';
-            document.getElementById('newPassword').value = '';
-            document.getElementById('newFacultyBranch').value = '';
+            try {
+                msgEl.textContent = '⏳ Creating user...';
+                msgEl.classList.remove('hidden');
 
-            setTimeout(() => document.getElementById('userMsg').classList.add('hidden'), 3000);
-            displayUsers();
-            updateMapDropdowns(); // Update faculty mapping dropdowns
+                // 1. Create the Firebase Auth account
+                const credential = await auth.createUserWithEmailAndPassword(email, initialPassword);
+                const uid = credential.user.uid;
+
+                // 2. Sign the new user back out immediately (we want admin to stay signed in)
+                await auth.signOut();
+
+                // 3. Re-authenticate as admin
+                if (currentAdminPass) {
+                    await auth.signInWithEmailAndPassword(currentUser + '@dharmavaram.com', currentAdminPass);
+                } else {
+                    // Fallback: force a reload so admin can re-login
+                    alert('Session expired — please login again as admin.');
+                    window.location.reload();
+                    return;
+                }
+
+                // 4. Save Firestore profile (NO password field)
+                const userRecord = { username, email, uid, name, type: 'user', branch, mustChangePassword: !passwordInput, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+                await db.collection('users').doc(username).set(userRecord);
+
+                // 5. Update in-memory store
+                USERS[username] = { username, email, uid, name, type: 'user', branch };
+
+                msgEl.textContent = `✅ Created: ${name} (${email}) — Initial password: ${initialPassword}`;
+                document.getElementById('newFacultyName').value = '';
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('newFacultyBranch').value = '';
+                setTimeout(() => msgEl.classList.add('hidden'), 6000);
+                displayUsers();
+                updateMapDropdowns();
+
+            } catch (err) {
+                console.error('❌ createUser:', err);
+                if (err.code === 'auth/email-already-in-use') {
+                    msgEl.textContent = '❌ Username already taken in Firebase Auth';
+                } else {
+                    msgEl.textContent = '❌ ' + err.message;
+                }
+                msgEl.style.color = 'red';
+                setTimeout(() => { msgEl.classList.add('hidden'); msgEl.style.color = ''; }, 6000);
+            }
         }
 
         function displayUsers() {
@@ -3605,13 +3788,68 @@
             }
         }
 
-        function deleteUser(username) {
-            if (confirm('Delete?')) {
+        async function deleteUser(username) {
+            const userData = USERS[username];
+            if (!userData) { alert('User not found'); return; }
+
+            if (!confirm(`⚠️ DELETE USER: ${userData.name} (${username})\n\nThis will remove them from the database.\nYou will also need to delete them from Firebase Console.\n\nContinue?`)) return;
+            if (!confirm(`Final confirmation: Delete "${userData.name}"?\nThis cannot be undone!`)) return;
+
+            const email = username + '@dharmavaram.com';
+            try {
+                // Archive user data for audit trail
+                await db.collection('deletedUsers').add({
+                    username,
+                    email,
+                    uid: userData.uid || '',
+                    name: userData.name,
+                    branch: userData.branch || '',
+                    deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    deletedBy: currentUser,
+                    originalData: userData
+                });
+
+                // Log action
+                await db.collection('adminLogs').add({
+                    action: 'DELETE_USER',
+                    username,
+                    email,
+                    performedBy: currentUser,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Delete from Firestore users collection
+                await db.collection('users').doc(username).delete();
+
+                // Remove from in-memory store
                 delete USERS[username];
                 saveSettings('users', USERS);
-                db.collection('users').doc(username).delete().catch(e => console.error('❌ Delete auth user:', e));
                 displayUsers();
                 updateMapDropdowns();
+
+                // Show Firebase Console instructions
+                showAdminModal(
+                    '🗑️ User Deleted — Action Required',
+                    '#f44336',
+                    `<div style="background:#fff3f3;border-left:4px solid #f44336;padding:14px;border-radius:6px;margin-bottom:16px;">
+                        <strong>✅ Removed from database:</strong> ${userData.name} (${username})<br>
+                        <span style="color:#888;font-size:13px;">Data archived in deletedUsers collection for audit.</span>
+                    </div>
+                    <div style="background:#f9f9f9;border-radius:8px;padding:16px;font-family:monospace;font-size:13px;line-height:1.8;">
+                        <strong>⚠️ Complete deletion — Required steps:</strong><br><br>
+                        1. Open Firebase Console (button below)<br>
+                        2. Go to <strong>Authentication → Users</strong><br>
+                        3. Search for: <strong>${email}</strong><br>
+                        4. Click the user row<br>
+                        5. Click <strong>"Delete account"</strong><br><br>
+                        Until this is done, the user cannot login<br>(they will get "Profile not found" error).
+                    </div>`,
+                    email
+                );
+
+            } catch (err) {
+                console.error('❌ deleteUser:', err);
+                alert('❌ Error deleting user: ' + err.message);
             }
         }
 
@@ -5256,48 +5494,144 @@
             setTimeout(() => el.classList.add('hidden'), 5000);
         }
 
-        function changeAdminPassword() {
+        async function changeAdminPassword() {
             const cur = document.getElementById('adminCurrentPass').value;
             const np = document.getElementById('adminNewPass').value;
             const cp = document.getElementById('adminConfirmPass').value;
             if (!cur || !np || !cp) { showMessage('adminPassMsg', '❌ Fill all fields', 'error'); return; }
-            if (USERS['admin'].password !== cur) { showMessage('adminPassMsg', '❌ Current password incorrect', 'error'); return; }
             if (np.length < 6) { showMessage('adminPassMsg', '❌ Min 6 characters', 'error'); return; }
             if (np !== cp) { showMessage('adminPassMsg', '❌ Passwords do not match', 'error'); return; }
-            USERS['admin'].password = np;
-            saveSettings('users', USERS);
-            db.collection('users').doc('admin').set(USERS['admin']).catch(e => console.error('❌ update admin pass:', e));
-            document.getElementById('adminCurrentPass').value = '';
-            document.getElementById('adminNewPass').value = '';
-            document.getElementById('adminConfirmPass').value = '';
-            showMessage('adminPassMsg', '✓ Password updated successfully', 'success');
+            try {
+                const user = auth.currentUser;
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, cur);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(np);
+                currentAdminPass = np;  // keep in-memory in sync
+                document.getElementById('adminCurrentPass').value = '';
+                document.getElementById('adminNewPass').value = '';
+                document.getElementById('adminConfirmPass').value = '';
+                showMessage('adminPassMsg', '✓ Password updated successfully', 'success');
+            } catch (err) {
+                console.error('❌ changeAdminPassword:', err);
+                const msg = err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
+                    ? '❌ Current password is incorrect'
+                    : '❌ ' + err.message;
+                showMessage('adminPassMsg', msg, 'error');
+            }
         }
 
-        function changeOwnPassword() {
+        async function changeOwnPassword() {
             const cur = document.getElementById('profileCurrentPass').value;
             const np = document.getElementById('profileNewPass').value;
             const cp = document.getElementById('profileConfirmPass').value;
             if (!cur || !np || !cp) { showMessage('profileMsg', '❌ Fill all fields', 'error'); return; }
-            if (USERS[currentUser].password !== cur) { showMessage('profileMsg', '❌ Current password incorrect', 'error'); return; }
             if (np.length < 6) { showMessage('profileMsg', '❌ Min 6 characters', 'error'); return; }
             if (np !== cp) { showMessage('profileMsg', '❌ Passwords do not match', 'error'); return; }
-            USERS[currentUser].password = np;
-            saveSettings('users', USERS);
-            db.collection('users').doc(currentUser).set(USERS[currentUser]).catch(e => console.error('❌ update pass:', e));
-            document.getElementById('profileCurrentPass').value = '';
-            document.getElementById('profileNewPass').value = '';
-            document.getElementById('profileConfirmPass').value = '';
-            showMessage('profileMsg', '✓ Password updated successfully', 'success');
+            try {
+                const user = auth.currentUser;
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, cur);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(np);
+                document.getElementById('profileCurrentPass').value = '';
+                document.getElementById('profileNewPass').value = '';
+                document.getElementById('profileConfirmPass').value = '';
+                showMessage('profileMsg', '✓ Password updated successfully', 'success');
+            } catch (err) {
+                console.error('❌ changeOwnPassword:', err);
+                const msg = err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
+                    ? '❌ Current password is incorrect'
+                    : '❌ ' + err.message;
+                showMessage('profileMsg', msg, 'error');
+            }
         }
 
-        function resetUserPassword(username) {
-            const newPass = prompt(`Enter new password for ${USERS[username].name}:\n(Minimum 6 characters)`, '');
-            if (newPass === null) return;
-            if (newPass.length < 6) { alert('Password must be at least 6 characters'); return; }
-            USERS[username].password = newPass;
-            saveSettings('users', USERS);
-            db.collection('users').doc(username).set(USERS[username]).catch(e => console.error('❌ update pass:', e));
-            alert(`✓ Password reset successful!\n\nUser: ${USERS[username].name}\nNew Password: ${newPass}\n\nPlease share this with the user.`);
+        async function resetUserPassword(username) {
+            const userData = USERS[username];
+            if (!userData) { alert('User not found'); return; }
+
+            if (!confirm(`Reset password for ${userData.name} (${username})?\n\nThis will force them to set a new password on next login.`)) return;
+
+            const email = username + '@dharmavaram.com';
+            try {
+                // Set mustChangePassword flag in Firestore
+                await db.collection('users').doc(username).update({
+                    mustChangePassword: true,
+                    passwordResetAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    passwordResetBy: currentUser
+                });
+
+                // Log the action
+                await db.collection('adminLogs').add({
+                    action: 'RESET_PASSWORD',
+                    username,
+                    email,
+                    performedBy: currentUser,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Show rich instructions modal
+                showAdminModal(
+                    '🔑 Password Reset — Next Steps',
+                    '#667eea',
+                    `<div style="background:#e8f5e9;border-left:4px solid #4caf50;padding:14px;border-radius:6px;margin-bottom:16px;">
+                        <strong>✅ Flag set for:</strong> ${userData.name} (${username})<br>
+                        <span style="color:#555;font-size:13px;">User will be forced to change password on next login.</span>
+                    </div>
+                    <div style="background:#f9f9f9;border-radius:8px;padding:16px;font-family:monospace;font-size:13px;line-height:1.8;">
+                        <strong>📋 To set a specific temporary password:</strong><br><br>
+                        1. Open Firebase Console (button below)<br>
+                        2. Go to <strong>Authentication → Users</strong><br>
+                        3. Search for: <strong>${email}</strong><br>
+                        4. Click the <strong>⋮ menu</strong> on that user row<br>
+                        5. Click <strong>"Reset password"</strong><br>
+                        6. Copy the reset link / temp password<br>
+                        7. Share it with <strong>${userData.name}</strong><br><br>
+                        They will be forced to change it on first login.
+                    </div>
+                    <div style="background:#fff8e1;border-left:4px solid #ffc107;padding:10px 14px;border-radius:6px;margin-top:14px;font-size:13px;">
+                        💡 <strong>Tip:</strong> If the user remembers their password and can still login, they will be
+                        immediately redirected to the Change Password screen.
+                    </div>`,
+                    email
+                );
+
+            } catch (err) {
+                console.error('❌ resetUserPassword:', err);
+                alert('❌ Failed to reset password: ' + err.message);
+            }
+        }
+
+        /**
+         * Generic admin modal for Reset Password & Delete User instructions.
+         * @param {string} title - Modal header text
+         * @param {string} accentColor - Header color
+         * @param {string} bodyHtml - Inner HTML for the body
+         * @param {string} email - Firebase Auth email to deep-link the console
+         */
+        function showAdminModal(title, accentColor, bodyHtml, email) {
+            // Remove any existing modal
+            const existing = document.getElementById('adminActionModal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'adminActionModal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;box-sizing:border-box;';
+
+            modal.innerHTML = `
+                <div style="background:white;padding:2rem;border-radius:14px;max-width:580px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                    <h2 style="color:${accentColor};margin:0 0 1.2rem 0;font-size:1.3rem;">${title}</h2>
+                    ${bodyHtml}
+                    <div style="display:flex;gap:12px;margin-top:1.5rem;">
+                        <button onclick="window.open('https://console.firebase.google.com/project/gpt-dharmavaram-attendance/authentication/users','_blank')"
+                            style="flex:1;padding:12px;background:${accentColor};color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">🔥 Open Firebase Console</button>
+                        <button onclick="document.getElementById('adminActionModal').remove()"
+                            style="flex:1;padding:12px;background:#eee;color:#333;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Close</button>
+                    </div>
+                </div>`;
+
+            // Close on backdrop click
+            modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+            document.body.appendChild(modal);
         }
 
         // ===================== SETTINGS =====================

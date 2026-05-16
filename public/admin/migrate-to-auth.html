@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth Migration — GPT Dharmavaram</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 35px;
+            max-width: 750px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #1e3c72; font-size: 1.7rem; margin-bottom: 8px; }
+        .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.88rem;
+            color: #1565c0;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.88rem;
+            color: #856404;
+        }
+        .form-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 200px; }
+        label { display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 0.88rem; }
+        input {
+            width: 100%; padding: 10px 12px;
+            border: 2px solid #ddd; border-radius: 8px;
+            font-size: 0.95rem; transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: #2a5298; }
+        .btn {
+            padding: 12px 28px; border: none; border-radius: 8px;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; margin-right: 10px; margin-bottom: 10px;
+        }
+        .btn-primary { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(42,82,152,0.4); }
+        .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .stats {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin: 20px 0;
+        }
+        .stat {
+            background: #f8f9fa; border-radius: 10px;
+            padding: 15px; text-align: center;
+        }
+        .stat h3 { font-size: 2rem; margin-bottom: 4px; }
+        .stat.success h3 { color: #28a745; }
+        .stat.skipped h3 { color: #ffc107; }
+        .stat.failed h3 { color: #dc3545; }
+        .stat p { font-size: 0.8rem; color: #666; }
+        #logBox {
+            background: #1a1a2e; color: #e0e0e0;
+            border-radius: 10px; padding: 18px;
+            max-height: 380px; overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem; line-height: 1.7;
+            margin-top: 20px;
+        }
+        .log-success { color: #4caf50; }
+        .log-error   { color: #f44336; }
+        .log-skip    { color: #ff9800; }
+        .log-info    { color: #90caf9; }
+        .log-header  { color: #ce93d8; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>🔐 Firebase Auth Migration Tool</h1>
+    <p class="subtitle">GPT Dharmavaram Attendance System — One-time migration from Firestore passwords → Firebase Authentication</p>
+
+    <div class="info-box">
+        ℹ️ <strong>What this does:</strong> For every user document in <code>users/</code> that doesn't yet have a Firebase Auth account,
+        this tool creates one with the email <code>username@dharmavaram.com</code> and a default password.
+        Users will be forced to change their password on first login.
+    </div>
+
+    <div class="warning-box">
+        ⚠️ <strong>Run as Admin:</strong> You must be logged in as Admin in the main app before using this tool.
+        Run this only once — already-migrated users are automatically skipped.
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>Admin Username</label>
+            <input type="text" id="adminUser" placeholder="e.g. admin" value="admin">
+        </div>
+        <div class="form-group">
+            <label>Admin Password (current)</label>
+            <input type="password" id="adminPass" placeholder="Your admin password">
+        </div>
+        <div class="form-group">
+            <label>Default password for new users</label>
+            <input type="text" id="defaultPass" value="123456" placeholder="123456">
+        </div>
+    </div>
+
+    <button class="btn btn-primary" id="startBtn" onclick="startMigration()">🚀 Start Migration</button>
+    <button class="btn btn-secondary" onclick="clearLog()">Clear Log</button>
+
+    <div class="stats" id="statsBox" style="display:none;">
+        <div class="stat success"><h3 id="cntSuccess">0</h3><p>Migrated</p></div>
+        <div class="stat skipped"><h3 id="cntSkipped">0</h3><p>Skipped (already done)</p></div>
+        <div class="stat failed"><h3 id="cntFailed">0</h3><p>Failed</p></div>
+    </div>
+
+    <div id="logBox"></div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC9nMFnZGdnOm5zXgpSMKiTFpzEBTuPfRM",
+        authDomain: "gpt-dharmavaram-attendance.firebaseapp.com",
+        projectId: "gpt-dharmavaram-attendance",
+        storageBucket: "gpt-dharmavaram-attendance.firebasestorage.app",
+        messagingSenderId: "471911252737",
+        appId: "1:471911252737:web:a88dcdfafbe0307e7a1100"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const EMAIL_DOMAIN = '@dharmavaram.com';
+    let success = 0, skipped = 0, failed = 0;
+
+    function log(msg, type = 'info') {
+        const box = document.getElementById('logBox');
+        const line = document.createElement('div');
+        line.className = 'log-' + type;
+        line.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+        box.appendChild(line);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function clearLog() {
+        document.getElementById('logBox').innerHTML = '';
+        document.getElementById('statsBox').style.display = 'none';
+        success = skipped = failed = 0;
+    }
+
+    function updateStats() {
+        document.getElementById('statsBox').style.display = 'grid';
+        document.getElementById('cntSuccess').textContent = success;
+        document.getElementById('cntSkipped').textContent = skipped;
+        document.getElementById('cntFailed').textContent = failed;
+    }
+
+    async function startMigration() {
+        const adminUser = document.getElementById('adminUser').value.trim().toLowerCase();
+        const adminPass = document.getElementById('adminPass').value;
+        const defaultPass = document.getElementById('defaultPass').value || '123456';
+
+        if (!adminUser || !adminPass) {
+            alert('Please enter Admin username and password');
+            return;
+        }
+        if (defaultPass.length < 6) {
+            alert('Default password must be at least 6 characters');
+            return;
+        }
+        if (!confirm(
+            `Start migration?\n\n` +
+            `• Email pattern: username${EMAIL_DOMAIN}\n` +
+            `• Default password: ${defaultPass}\n` +
+            `• Users will be forced to change password on first login.\n\n` +
+            `Already-migrated users will be skipped safely.`
+        )) return;
+
+        const btn = document.getElementById('startBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Running...';
+        success = skipped = failed = 0;
+        updateStats();
+
+        log('═══════════════════════════════════════════════', 'header');
+        log('Firebase Auth Migration — GPT Dharmavaram', 'header');
+        log('═══════════════════════════════════════════════', 'header');
+        log('');
+
+        try {
+            // Step 1: Sign in as admin
+            log('1. Signing in as admin...', 'info');
+            const adminEmail = adminUser + EMAIL_DOMAIN;
+            await auth.signInWithEmailAndPassword(adminEmail, adminPass);
+            log('   ✅ Admin signed in: ' + adminEmail, 'success');
+            log('');
+
+            // Step 2: Fetch all users
+            log('2. Fetching users from Firestore...', 'info');
+            const snap = await db.collection('users').get();
+            log(`   Found ${snap.size} user documents.`, 'info');
+            log('');
+
+            // Step 3: Migrate each user
+            log('3. Migrating users...', 'info');
+            log('');
+
+            for (const doc of snap.docs) {
+                const username = doc.id;
+                const data = doc.data();
+                const email = username + EMAIL_DOMAIN;
+
+                // Skip if already migrated
+                if (data.firebaseAuthMigrated) {
+                    log(`⏭  ${username} — already migrated (skipping)`, 'skip');
+                    skipped++;
+                    updateStats();
+                    continue;
+                }
+
+                // Skip the admin account if it's already signed in (it has an auth account)
+                if (username === adminUser) {
+                    log(`⏭  ${username} — admin account (signing in verified it exists, skipping)`, 'skip');
+                    // Just mark as migrated in Firestore
+                    await db.collection('users').doc(username).update({
+                        email: email,
+                        firebaseAuthMigrated: true,
+                        migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).catch(() => {});
+                    skipped++;
+                    updateStats();
+                    continue;
+                }
+
+                try {
+                    // Sign out admin temporarily to create new user
+                    await auth.signOut();
+
+                    // Create Firebase Auth account for this user
+                    const cred = await auth.createUserWithEmailAndPassword(email, defaultPass);
+                    const uid = cred.user.uid;
+
+                    // Sign out the new user
+                    await auth.signOut();
+
+                    // Re-sign in as admin
+                    await auth.signInWithEmailAndPassword(adminEmail, adminPass);
+
+                    // Update Firestore document
+                    const update = {
+                        email: email,
+                        uid: uid,
+                        mustChangePassword: true,
+                        firebaseAuthMigrated: true,
+                        migratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    // Preserve old password temporarily (for rollback reference)
+                    if (data.password) update._oldPassword = data.password;
+                    await db.collection('users').doc(username).update(update);
+
+                    log(`✅ ${username} (${data.type || 'user'}) — ${email}`, 'success');
+                    success++;
+                    updateStats();
+
+                } catch (err) {
+                    // Re-sign in as admin if we got signed out during error
+                    try { await auth.signOut(); await auth.signInWithEmailAndPassword(adminEmail, adminPass); } catch (_) {}
+
+                    if (err.code === 'auth/email-already-in-use') {
+                        log(`⚠️  ${username} — email already in Firebase Auth, marking migrated`, 'skip');
+                        await db.collection('users').doc(username).update({
+                            email: email,
+                            firebaseAuthMigrated: true,
+                            mustChangePassword: true
+                        }).catch(() => {});
+                        skipped++;
+                    } else {
+                        log(`❌ ${username} — FAILED: ${err.message}`, 'error');
+                        failed++;
+                    }
+                    updateStats();
+                }
+            }
+
+            log('');
+            log('═══════════════════════════════════════════════', 'header');
+            log('Migration Complete!', 'header');
+            log(`✅ Migrated: ${success}`, 'success');
+            log(`⏭  Skipped:  ${skipped}`, 'skip');
+            log(`❌ Failed:   ${failed}`, failed > 0 ? 'error' : 'info');
+            log('');
+            log('Default password for new users: ' + defaultPass, 'info');
+            log('Users will be forced to change password on first login.', 'info');
+            log('═══════════════════════════════════════════════', 'header');
+
+            updateStats();
+            alert(`Migration complete!\n\n✅ Migrated: ${success}\n⏭ Skipped: ${skipped}\n❌ Failed: ${failed}\n\nDefault password: ${defaultPass}`);
+
+        } catch (err) {
+            log('❌ MIGRATION ERROR: ' + err.message, 'error');
+            alert('Migration failed: ' + err.message);
+        }
+
+        btn.disabled = false;
+        btn.textContent = '🚀 Start Migration';
+    }
+</script>
+</body>
+</html>

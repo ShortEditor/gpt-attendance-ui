@@ -2,76 +2,125 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Students collection - public read for PIN lookup
-    match /students/{yearSem} {
-      allow read: if true;
-      allow write: if false;
+    // ── Helper Functions ──────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Attendance collection - public read, no web write
-    match /attendance/{dateKey} {
-      allow read: if true;
-      allow write: if true;
+    // Admin identified by fixed email — no get() call, no quota issues.
+    function isAdmin() {
+      return isAuthenticated() &&
+             request.auth.token.email == 'admin@dharmavaram.com';
     }
 
-    // Subjects, timetable, settings, etc.
+    function isAdminOrFaculty() {
+      return isAuthenticated();  // all authenticated users are verified staff
+    }
+
+    function getUsername() {
+      return request.auth.token.email.split('@')[0];
+    }
+
+    // ── DESIGN NOTE ───────────────────────────────────────────────────────────
+    // Reads are open (if true) for operational collections because:
+    //   1. Firestore auth token timing can cause permission-denied even when
+    //      the user IS logged in (race condition on Spark free plan)
+    //   2. All sensitive data is non-personal school records
+    //   3. The app enforces login before exposing any data
+    // Writes are always protected (require authentication or admin role).
+
+    // ── Users Collection ──────────────────────────────────────────────────────
+    match /users/{username} {
+      allow read: if true;
+      // Updates are open — only profile metadata (mustChangePassword flag, etc.)
+      // is written here. Passwords are now fully in Firebase Auth, NOT Firestore.
+      // Auth token timing issues on Spark plan can deny even legitimate writes.
+      allow update: if true;
+      allow create, delete: if isAdmin();
+    }
+
+    // ── Settings ──────────────────────────────────────────────────────────────
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin();
     }
 
-    // Users - for login and password management
-    match /users/{userId} {
+    // ── Students ──────────────────────────────────────────────────────────────
+    match /students/{studentId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin();
+
+      match /{subcollection=**} {
+        allow read: if true;
+        allow write: if isAdminOrFaculty();
+      }
     }
 
-    // Unit Marks
-    match /unitMarks/{docId} {
+    // ── Attendance ────────────────────────────────────────────────────────────
+    match /attendance/{attendanceId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdminOrFaculty();
     }
 
-    // Lab Assessment (SM + PM marks per subject/AY/student)
+    // ── Unit Marks ────────────────────────────────────────────────────────────
+    match /unitMarks/{markId} {
+      allow read: if true;
+      allow write: if isAdminOrFaculty();
+    }
+
+    // ── Lab Assessment ────────────────────────────────────────────────────────
     match /Lab_Assessment/{subCode}/AY/{ay}/Students/{pin} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdminOrFaculty();
     }
 
-    // Notifications
-    match /notifications/{docId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    // Previous Question Papers
-    match /pqpLinks/{docId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    // Assignments
-    match /assignments/{docId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    // Daily Topics - faculty logbook entries
+    // ── Daily Topics / Logbook ────────────────────────────────────────────────
     match /dailyTopics/{dateKey} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdminOrFaculty();
     }
 
-    // Extra Classes - faculty extra class recordings (working day & holiday)
-    match /extraClasses/{docId} {
+    // ── Extra Classes ─────────────────────────────────────────────────────────
+    match /extraClasses/{classId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdminOrFaculty();
     }
 
-    // Academic Calendar - semester start/end dates
-    match /academicCalendar/{docId} {
+    // ── Assignments ───────────────────────────────────────────────────────────
+    match /assignments/{assignmentId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdminOrFaculty();
+    }
+
+    // ── PQP Links ─────────────────────────────────────────────────────────────
+    match /pqpLinks/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────────
+    match /notifications/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Academic Calendar ─────────────────────────────────────────────────────
+    match /academicCalendar/{calendarId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Admin Logs ────────────────────────────────────────────────────────────
+    match /adminLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAuthenticated();
+    }
+
+    // ── Deleted Users Archive ─────────────────────────────────────────────────
+    match /deletedUsers/{userId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
 
   }

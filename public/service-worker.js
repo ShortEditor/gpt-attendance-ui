@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gpt-attendance-v4';
+const CACHE_NAME = 'gpt-attendance-v5';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/icon-192.png',
