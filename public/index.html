@@ -779,7 +779,8 @@
             <h1>🔒 Change Password</h1>
             <p>GPT Dharmavaram - You must set a new password before continuing</p>
         </div>
-        <div id="changePwdWarning" style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin-bottom:18px;border-radius:6px;color:#856404;font-size:13px;">
+        <div id="changePwdWarning"
+            style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin-bottom:18px;border-radius:6px;color:#856404;font-size:13px;">
             ⚠️ You must set a personal password before continuing.<br>
             <strong>Current Password</strong> = the password you just used to login (default: <code>123456</code>)
         </div>
@@ -797,7 +798,8 @@
             <label>Confirm New Password</label>
             <input type="password" id="cpConfirmPass" placeholder="Re-enter new password">
         </div>
-        <button class="btn btn-primary" id="cpSubmitBtn" onclick="submitChangePassword()" style="width:100%;">Set New Password</button>
+        <button class="btn btn-primary" id="cpSubmitBtn" onclick="submitChangePassword()" style="width:100%;">Set New
+            Password</button>
     </div>
 
     <!-- MAIN APPLICATION -->
@@ -1485,10 +1487,10 @@
                         <label>Username</label>
                         <input type="text" id="newUsername" placeholder="Username">
                     </div>
-                    <div class="form-group">
-                        <label>Initial Password <small style="color:#888;">(optional, default: 123456)</small></label>
-                        <input type="password" id="newPassword" placeholder="Leave blank for default (123456)">
-                    </div>
+
+
+
+
                     <div class="form-group">
                         <label>Branch</label>
                         <select id="newFacultyBranch">
@@ -2832,7 +2834,7 @@
                 // Admin must always login manually
                 if (userData.type === 'admin') { await auth.signOut(); return; }
                 // Force re-login if password change is required (page-refresh scenario)
-                if (userData.mustChangePassword) { await auth.signOut(); return; }
+                if (userData.mustChangePassword || userData.forcePasswordChange) { await auth.signOut(); return; }
                 // Restore faculty session
                 currentUser = username;
                 currentUserType = 'user';
@@ -2930,6 +2932,10 @@
 
                 // Fetch Firestore user doc for role + mustChangePassword
                 const userDoc = await db.collection('users').doc(user).get();
+                // Sync authPassword so admin can reset this user's password later
+                if (userDoc.exists && userDoc.data().type === 'user') {
+                    db.collection('users').doc(user).update({ authPassword: pass }).catch(() => {});
+                }
                 if (!userDoc.exists) {
                     await auth.signOut();
                     throw new Error('User record not found. Please contact admin.');
@@ -2947,11 +2953,23 @@
                 if (type === 'admin') currentAdminPass = pass;
                 localStorage.removeItem('facultySession'); // Clean up old session storage
 
-                // ── mustChangePassword: show change-password screen ──
-                if (userData.mustChangePassword) {
+                // ── mustChangePassword / forcePasswordChange: show change-password screen ──
+                if (userData.mustChangePassword || userData.forcePasswordChange) {
                     currentUser = user;
                     currentUserType = type;
                     currentUserName = userData.name;
+                    // Show appropriate hint in the warning box
+                    const warnBox = document.getElementById('changePwdWarning');
+                    if (warnBox) {
+                        if (userData.forcePasswordChange) {
+                            warnBox.innerHTML = '⚠️ Your password has been reset by the Admin.<br>'
+                                + 'Please set a new personal password. '
+                                + '<strong>Current Password</strong> = the password you just used to login.';
+                        } else {
+                            warnBox.innerHTML = '⚠️ You must set a personal password before continuing.<br>'
+                                + '<strong>Current Password</strong> = the password you just used to login (default: <code>123456</code>)';
+                        }
+                    }
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.getElementById('changePwdScreen').classList.remove('hidden');
                     loginBtn.disabled = false;
@@ -2987,11 +3005,30 @@
             } catch (error) {
                 console.error('Login error:', error);
                 let msg = error.message;
-                // Friendly messages for common Firebase Auth errors
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' ||
-                    error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email' ||
-                    error.code === 'auth/invalid-login-credentials') {
-                    msg = '❌ Incorrect username or password.\n\nIf this is your first login, use the default password: 123456\nIf you forgot your password, ask the Admin to reset it.';
+                const authFailCodes = [
+                    'auth/user-not-found', 'auth/wrong-password',
+                    'auth/invalid-credential', 'auth/invalid-email',
+                    'auth/invalid-login-credentials'
+                ];
+                if (authFailCodes.includes(error.code)) {
+                    // Check Firestore: show helpful hint only when relevant
+                    try {
+                        const resetDoc = await db.collection('users').doc(user).get();
+                        const data = resetDoc.exists ? resetDoc.data() : {};
+                        if (data.forcePasswordChange) {
+                            // Admin reset pending — user should use 123456
+                            msg = 'Incorrect password. Your password was reset by Admin. Use default password: 123456';
+                        } else if (!data.passwordChangedAt) {
+                            // User has never changed password — still on default
+                            msg = 'Incorrect password. If this is your first login, use the default password: 123456';
+                        } else {
+                            // User has set a personal password — keep it simple
+                            msg = 'Incorrect password.';
+                        }
+                    } catch (_) {
+                        msg = 'Incorrect password.';
+                    }
+
                 } else if (error.code === 'auth/too-many-requests') {
                     msg = 'Too many failed attempts. Please try again later.';
                 } else if (error.code === 'auth/network-request-failed') {
@@ -3057,6 +3094,9 @@
                 // be propagated to Firestore in time.
                 await db.collection('users').doc(currentUser).update({
                     mustChangePassword: false,
+                    forcePasswordChange: false,
+                    tempPassword: firebase.firestore.FieldValue.delete(),
+                    authPassword: np,   // keep in sync so admin reset works
                     passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
@@ -3692,8 +3732,8 @@
             const name = document.getElementById('newFacultyName').value.trim();
             const username = document.getElementById('newUsername').value.trim().toLowerCase();
             const branch = document.getElementById('newFacultyBranch').value;
-            const passwordInput = document.getElementById('newPassword').value;
-            const initialPassword = passwordInput || '123456';
+
+            const initialPassword = '123456';
 
             if (!name || !username) {
                 alert('Fill Name and Username fields');
@@ -3732,8 +3772,9 @@
                     return;
                 }
 
-                // 4. Save Firestore profile (NO password field)
-                const userRecord = { username, email, uid, name, type: 'user', branch, mustChangePassword: !passwordInput, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+                // 4. Save Firestore profile (authPassword keeps Auth password in sync for admin reset)
+                // authPassword = initialPassword (123456) — synced for admin reset
+                const userRecord = { username, email, uid, name, type: 'user', branch, mustChangePassword: true, authPassword: initialPassword, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
                 await db.collection('users').doc(username).set(userRecord);
 
                 // 5. Update in-memory store
@@ -3742,7 +3783,7 @@
                 msgEl.textContent = `✅ Created: ${name} (${email}) — Initial password: ${initialPassword}`;
                 document.getElementById('newFacultyName').value = '';
                 document.getElementById('newUsername').value = '';
-                document.getElementById('newPassword').value = '';
+
                 document.getElementById('newFacultyBranch').value = '';
                 setTimeout(() => msgEl.classList.add('hidden'), 6000);
                 displayUsers();
@@ -3769,15 +3810,19 @@
                     const branchName = BRANCHES.find(b => b.id === USERS[username].branch)?.name || 'No branch';
                     const div = document.createElement('div');
                     div.className = 'subject-item';
+                    const isPendingReset = USERS[username].forcePasswordChange || USERS[username].mustChangePassword;
+                    const resetBadge = isPendingReset
+                        ? `<span style="margin-left:8px;padding:3px 10px;background:#fff3cd;border:1px solid #ffc107;border-radius:12px;font-size:11px;font-weight:600;color:#856404;">⏳ Reset Pending</span>`
+                        : '';
                     div.innerHTML = `
                         <span>
                             <strong>${USERS[username].name}</strong> 
                             <span style="color:#888;font-size:12px;">(${username})</span>
                             <span style="margin-left:10px;padding:3px 10px;background:#e3f2fd;border-radius:12px;font-size:11px;font-weight:600;color:#1976d2;">${branchName}</span>
+                            ${resetBadge}
                         </span>
                         <div>
-                            <button class="btn btn-primary" onclick="resetUserPassword('${username}')" style="padding:8px 15px;margin-right:8px;">🔑 Reset Password</button>
-                            <button class="btn btn-danger" onclick="deleteUser('${username}')" style="padding:8px 15px;">Delete</button>
+                            <button class="btn btn-primary" onclick="resetUserPassword('${username}')" style="padding:8px 15px;" ${isPendingReset ? 'disabled title="Password reset already pending"' : ''}>🔑 Reset Password</button>
                         </div>
                     `;
                     list.appendChild(div);
@@ -5519,85 +5564,176 @@
                 showMessage('adminPassMsg', msg, 'error');
             }
         }
+        // Resets a faculty user password to '123456' using a secondary Firebase app instance.
+        // The admin stays signed in on the primary app throughout.
 
-        async function changeOwnPassword() {
-            const cur = document.getElementById('profileCurrentPass').value;
-            const np = document.getElementById('profileNewPass').value;
-            const cp = document.getElementById('profileConfirmPass').value;
-            if (!cur || !np || !cp) { showMessage('profileMsg', '❌ Fill all fields', 'error'); return; }
-            if (np.length < 6) { showMessage('profileMsg', '❌ Min 6 characters', 'error'); return; }
-            if (np !== cp) { showMessage('profileMsg', '❌ Passwords do not match', 'error'); return; }
-            try {
-                const user = auth.currentUser;
-                const credential = firebase.auth.EmailAuthProvider.credential(user.email, cur);
-                await user.reauthenticateWithCredential(credential);
-                await user.updatePassword(np);
-                document.getElementById('profileCurrentPass').value = '';
-                document.getElementById('profileNewPass').value = '';
-                document.getElementById('profileConfirmPass').value = '';
-                showMessage('profileMsg', '✓ Password updated successfully', 'success');
-            } catch (err) {
-                console.error('❌ changeOwnPassword:', err);
-                const msg = err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
-                    ? '❌ Current password is incorrect'
-                    : '❌ ' + err.message;
-                showMessage('profileMsg', msg, 'error');
-            }
-        }
+
+
+
+
+
+
+
+
+
 
         async function resetUserPassword(username) {
+            // ─────────────────────────────────────────────────────────────────────
+            // HOW THIS WORKS (no Cloud Functions, no email, Spark plan compatible):
+            //
+            // On every successful login + password change, the app writes
+            // authPassword to Firestore (synced with the real Firebase Auth password).
+            //
+            // Admin reset reads that stored password → signs into secondary Firebase
+            // app instance AS the faculty user → changes their Auth password to 123456
+            // → updates Firestore authPassword → sets forcePasswordChange: true.
+            //
+            // Admin stays signed in on the primary Firebase app throughout.
+            // ─────────────────────────────────────────────────────────────────────
             const userData = USERS[username];
             if (!userData) { alert('User not found'); return; }
 
-            if (!confirm(`Reset password for ${userData.name} (${username})?\n\nThis will force them to set a new password on next login.`)) return;
+            if (!confirm(`Reset password for ${userData.name} (${username})?\n\nThis will:\n• Reset their password to default (123456)\n• Force them to set a new password on next login.`)) return;
 
             const email = username + '@dharmavaram.com';
+            const DEFAULT_PASSWORD = '123456';
+
+            // Show loading overlay
+            const loadingEl = document.createElement('div');
+            loadingEl.id = 'resetLoadingOverlay';
+            loadingEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:99999;';
+            loadingEl.innerHTML = '<div style="background:white;padding:28px 40px;border-radius:14px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.3);"><div style="font-size:28px;margin-bottom:10px;">⏳</div><div style="font-size:15px;font-weight:600;">Resetting password...</div><div style="font-size:12px;color:#888;margin-top:6px;">Admin session is preserved</div></div>';
+            document.body.appendChild(loadingEl);
+
+            // ── Secondary Firebase App instance ──────────────────────────────────
+            // Uses a unique name so it doesn't clash with the primary app.
+            // Admin stays signed in on the primary 'default' Firebase app.
+            const secondaryAppName = 'secondary-reset-' + Date.now();
+            let secondaryApp = null;
+
             try {
-                // Set mustChangePassword flag in Firestore
+
+                // 1. Read authPassword from Firestore (synced on every login + password change)
+                //    This is the user's actual current Firebase Auth password.
+                const userSnap = await db.collection('users').doc(username).get();
+                const storedPass = userSnap.exists ? (userSnap.data().authPassword || null) : null;
+
+                // Determine which password to try: stored password first, fallback to 123456
+                const passwordsToTry = storedPass
+                    ? [storedPass, DEFAULT_PASSWORD]
+                    : [DEFAULT_PASSWORD];
+
+                // 2. Create secondary app to sign in as the faculty user WITHOUT signing out admin
+                secondaryApp = firebase.initializeApp(firebaseConfig, secondaryAppName);
+                const secondaryAuth = secondaryApp.auth();
+
+                // 3. Try signing in with each candidate password
+                let facultyCred = null;
+                for (const tryPass of passwordsToTry) {
+                    try {
+                        facultyCred = await secondaryAuth.signInWithEmailAndPassword(email, tryPass);
+                        break;
+                    } catch (_) { /* try next */ }
+                }
+
+                if (!facultyCred) {
+                    // None of the passwords worked
+                    await secondaryAuth.signOut().catch(() => {});
+                    await secondaryApp.delete().catch(() => {});
+                    secondaryApp = null;
+                    document.getElementById('resetLoadingOverlay')?.remove();
+                    await db.collection('users').doc(username).update({
+                        mustChangePassword: true,
+                        forcePasswordChange: true,
+                        passwordResetAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        passwordResetBy: currentUser
+                    });
+                    if (USERS[username]) {
+                        USERS[username].mustChangePassword = true;
+                        USERS[username].forcePasswordChange = true;
+                    }
+                    displayUsers();
+
+                    showAdminModal(
+                        '⚠️ Partial Reset — User Has Custom Password',
+                        '#f57c00',
+                        `<div style="background:#fff8e1;border-left:4px solid #ffc107;padding:14px;border-radius:6px;margin-bottom:16px;">
+                            <strong>⚠️ Could not reset Firebase Auth password automatically.</strong><br>
+                            <span style="color:#555;font-size:13px;">${userData.name} has changed their password from the default — it cannot be reset without knowing their current password.</span>
+                        </div>
+                        <div style="background:#f9f9f9;border-radius:8px;padding:16px;font-size:13px;line-height:1.9;">
+                            <strong>✅ What was done:</strong> The account is flagged — user will be forced to change password on next successful login.<br><br>
+                            <strong>🔧 To fully reset to 123456:</strong><br>
+                            1. Open <strong>Firebase Console → Authentication → Users</strong><br>
+                            2. Find: <strong>${email}</strong><br>
+                            3. Click <strong>⋮ menu → Reset password</strong> and set it to <code>123456</code><br>
+                            4. Tell the user to login with <strong>123456</strong>
+                        </div>`,
+                        email
+                    );
+                    return;
+                }
+
+                // 3. Update their password to DEFAULT (123456) on the secondary instance
+                await facultyCred.user.updatePassword(DEFAULT_PASSWORD);
+
+                // 4. Set forcePasswordChange flag in Firestore
                 await db.collection('users').doc(username).update({
                     mustChangePassword: true,
+                    forcePasswordChange: true,
                     passwordResetAt: firebase.firestore.FieldValue.serverTimestamp(),
                     passwordResetBy: currentUser
                 });
 
-                // Log the action
+                // 5. Log the action
                 await db.collection('adminLogs').add({
-                    action: 'RESET_PASSWORD',
+                    action: 'ADMIN_RESET_PASSWORD',
                     username,
                     email,
                     performedBy: currentUser,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                // Show rich instructions modal
+                // 6. Sign out of secondary instance and clean it up
+                await secondaryAuth.signOut();
+                await secondaryApp.delete();
+                secondaryApp = null;
+
+                // 7. Update in-memory store
+                if (USERS[username]) {
+                    USERS[username].mustChangePassword = true;
+                    USERS[username].forcePasswordChange = true;
+                }
+
+                document.getElementById('resetLoadingOverlay')?.remove();
+                displayUsers();
+
+                // Show success modal — admin is still fully signed in
                 showAdminModal(
-                    '🔑 Password Reset — Next Steps',
-                    '#667eea',
+                    '🔑 Password Reset — Done',
+                    '#4caf50',
                     `<div style="background:#e8f5e9;border-left:4px solid #4caf50;padding:14px;border-radius:6px;margin-bottom:16px;">
-                        <strong>✅ Flag set for:</strong> ${userData.name} (${username})<br>
-                        <span style="color:#555;font-size:13px;">User will be forced to change password on next login.</span>
+                        <strong>✅ Password reset for:</strong> ${userData.name} (${username})<br>
+                        <span style="color:#555;font-size:13px;">Firebase Auth password has been set to <strong>123456</strong>.</span>
                     </div>
-                    <div style="background:#f9f9f9;border-radius:8px;padding:16px;font-family:monospace;font-size:13px;line-height:1.8;">
-                        <strong>📋 To set a specific temporary password:</strong><br><br>
-                        1. Open Firebase Console (button below)<br>
-                        2. Go to <strong>Authentication → Users</strong><br>
-                        3. Search for: <strong>${email}</strong><br>
-                        4. Click the <strong>⋮ menu</strong> on that user row<br>
-                        5. Click <strong>"Reset password"</strong><br>
-                        6. Copy the reset link / temp password<br>
-                        7. Share it with <strong>${userData.name}</strong><br><br>
-                        They will be forced to change it on first login.
-                    </div>
-                    <div style="background:#fff8e1;border-left:4px solid #ffc107;padding:10px 14px;border-radius:6px;margin-top:14px;font-size:13px;">
-                        💡 <strong>Tip:</strong> If the user remembers their password and can still login, they will be
-                        immediately redirected to the Change Password screen.
+                    <div style="background:#f9f9f9;border-radius:8px;padding:16px;font-size:13px;line-height:1.9;">
+                        <strong>💬 Tell the user:</strong><br><br>
+                        • Login with username: <strong>${username}</strong><br>
+                        • Use password: <strong style="font-size:16px;letter-spacing:3px;color:#1976d2;">123456</strong><br>
+                        • They will immediately be asked to set a new personal password<br><br>
+                        <em style="color:#888;">The old password no longer works.</em>
                     </div>`,
                     email
                 );
 
             } catch (err) {
-                console.error('❌ resetUserPassword:', err);
-                alert('❌ Failed to reset password: ' + err.message);
+                // Cleanup secondary app on any unexpected error
+                if (secondaryApp) {
+                    await secondaryApp.delete().catch(() => {});
+                }
+                document.getElementById('resetLoadingOverlay')?.remove();
+                console.error('resetUserPassword error:', err);
+                alert('Failed to reset password: ' + err.message);
             }
         }
 
