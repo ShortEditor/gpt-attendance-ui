@@ -4097,9 +4097,11 @@
         }
 
         function deleteSubject(code) {
-            if (confirm('Delete?')) {
+            if (confirm('Delete subject ' + code + '?')) {
                 delete SUBJECTS[code];
-                saveSettings('subjects', SUBJECTS);
+                // Must use set() WITHOUT merge:true — merge keeps deleted keys in Firestore
+                db.collection('settings').doc('subjects').set(SUBJECTS)
+                    .catch(e => alert('❌ Failed to delete: ' + e.message));
                 displaySubjects();
                 updateTTSubjectList();
                 updateMapDropdowns();
