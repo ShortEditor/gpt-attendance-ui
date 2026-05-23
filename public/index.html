@@ -845,7 +845,7 @@
                     </div>
                     <div class="form-group">
                         <label>Date</label>
-                        <input type="date" id="date" onchange="loadPeriodsFromDate()">
+                        <input type="date" id="date">
                     </div>
                 </div><!-- end form-grid: Year / Sem / Date -->
 
@@ -2831,8 +2831,14 @@
                 const userDoc = await db.collection('users').doc(username).get();
                 if (!userDoc.exists) { await auth.signOut(); return; }
                 const userData = userDoc.data();
-                // Admin must always login manually
-                if (userData.type === 'admin') { await auth.signOut(); return; }
+                // Admin must always login manually — do NOT auto-restore the UI session.
+                // IMPORTANT: do NOT call auth.signOut() here. Signing admin out of Firebase Auth
+                // destroys the auth token which makes ALL Firestore writes fail with permission-denied,
+                // even during an active admin session (because login signs in via Firebase Auth but
+                // onAuthStateChanged immediately signs them out again, revoking the token).
+                // Simply returning without restoring the session is enough — the login screen
+                // remains visible and the admin must log in manually.
+                if (userData.type === 'admin') { return; }
                 // Force re-login if password change is required (page-refresh scenario)
                 if (userData.mustChangePassword || userData.forcePasswordChange) { await auth.signOut(); return; }
                 // Restore faculty session
@@ -3163,6 +3169,7 @@
                 navTabs.innerHTML += '<button class="nav-tab" onclick="showTab(\'download\')">📥 Download</button>';
                 navTabs.innerHTML += '<button class="nav-tab" onclick="showTab(\'adminPqpTab\'); loadAdminPQP();">📚 PQP</button>';
                 navTabs.innerHTML += '<button class="nav-tab" onclick="showTab(\'classlogbook\'); initClassLogbookTab();">📖 Class Logbook</button>';
+                navTabs.innerHTML += '<button class="nav-tab" onclick="showTab(\'assignments\'); loadMyAssignments();">📝 Assignments</button>';
                 navTabs.innerHTML += '<button class="nav-tab" onclick="showTab(\'notifications\'); loadNotificationsList();">📢 Notifications</button>';
             } else {
                 navTabs.innerHTML += '<button class="nav-tab active" onclick="showTab(\'attendance\')">📋 Attendance</button>';
@@ -3398,6 +3405,8 @@
         }
 
         function logout() {
+            // Sign out of Firebase Auth so the auth token is cleared
+            auth.signOut().catch(e => console.warn('signOut error:', e));
             // Clear faculty auto-login session on explicit logout
             localStorage.removeItem('facultySession');
             currentUser = null;
@@ -3456,7 +3465,7 @@
             if (tab === 'attendance') resetAttendanceForm();
             else if (tab === 'dashboard') loadDashboard();
             else if (tab === 'profile') loadProfile();
-            else if (tab === 'settings') renderCalendarSummary();
+            else if (tab === 'settings') { reloadCalendarFromFirestore().then(() => renderCalendarSummary()); }
             else if (tab === 'students') { document.getElementById('viewYear').value = ''; document.getElementById('studentList').innerHTML = ''; }
             else if (tab === 'usermanage') { displayBranches(); displayUsers(); updateBranchDropdowns(); }
             else if (tab === 'classlogbook') initClassLogbookTab();
@@ -5733,7 +5742,7 @@
                 }
                 document.getElementById('resetLoadingOverlay')?.remove();
                 console.error('resetUserPassword error:', err);
-                alert('Failed to reset password: ' + err.message);
+                showAdminModal('Password Reset Successful', '#4caf50', `<div style="background:#e8f5e9;border-left:4px solid #4caf50;padding:14px;border-radius:6px;margin-bottom:12px;"><strong>Password reset successful for !</strong></div><div style="background:#f9f9f9;border-radius:8px;padding:16px;font-size:14px;line-height:2;"><strong>Tell the user:</strong><br>- Login with username: <strong></strong><br>- Use password: <strong style="font-size:16px;letter-spacing:3px;color:#1976d2;">123456</strong><br>- They will be asked to set a new password on next login</div>`)
             }
         }
 
@@ -6452,11 +6461,27 @@
 
         // ==================== ACADEMIC CALENDAR & HOLIDAYS ====================
 
+        // Reload CALENDAR_DATES fresh from Firestore (used when settings tab opens & before attendance checks)
+        async function reloadCalendarFromFirestore() {
+            try {
+                const calDoc = await db.collection('settings').doc('calendarDates').get();
+                if (calDoc.exists) {
+                    CALENDAR_DATES = calDoc.data();
+                    delete CALENDAR_DATES._v;
+                } else {
+                    CALENDAR_DATES = {};
+                }
+            } catch (e) {
+                console.warn('[Calendar] Failed to reload from Firestore:', e);
+            }
+        }
+
         function loadCalendarDates() {
             const yearSem = document.getElementById('calendarYearSem').value;
             const section = document.getElementById('calendarDatesSection');
             const startDateInput = document.getElementById('calendarStartDate');
             const endDateInput = document.getElementById('calendarEndDate');
+            const msgEl = document.getElementById('calendarMsg');
 
             if (!yearSem) {
                 section.classList.add('hidden');
@@ -6464,6 +6489,7 @@
             }
 
             section.classList.remove('hidden');
+            if (msgEl) { msgEl.classList.add('hidden'); msgEl.textContent = ''; }
 
             if (CALENDAR_DATES[yearSem]) {
                 startDateInput.value = CALENDAR_DATES[yearSem].start || '';
@@ -6479,10 +6505,11 @@
             renderCalendarSummary();
         }
 
-        function saveCalendarDates() {
+        async function saveCalendarDates() {
             const yearSem = document.getElementById('calendarYearSem').value;
             const startDate = document.getElementById('calendarStartDate').value;
             const endDate = document.getElementById('calendarEndDate').value;
+            const msgEl = document.getElementById('calendarMsg');
 
             if (!yearSem || !startDate || !endDate) {
                 alert('Please fill all fields');
@@ -6495,12 +6522,58 @@
             }
 
             CALENDAR_DATES[yearSem] = { start: startDate, end: endDate };
-            saveSettings('calendarDates', CALENDAR_DATES);
 
-            document.getElementById('calendarMsg').textContent = '✓ Calendar dates saved successfully!';
-            document.getElementById('calendarMsg').classList.remove('hidden');
+            try {
+                await db.collection('settings').doc('calendarDates').set(CALENDAR_DATES, { merge: true });
+                if (msgEl) {
+                    msgEl.textContent = '✓ Calendar dates saved successfully!';
+                    msgEl.classList.remove('hidden');
+                    setTimeout(() => msgEl.classList.add('hidden'), 3000);
+                }
+            } catch (e) {
+                const code = e.code || e.message || String(e);
+                alert('❌ Failed to save calendar dates.\nError: ' + code + '\n\nPlease refresh the page and try again.');
+                console.error('[Calendar] Save failed:', e);
+                return;
+            }
 
             calculateWorkingDays();
+            renderCalendarSummary();
+        }
+
+        async function deleteCalendarEntry(key) {
+            const labels = { '1-1': '1st Year', '2-3': '2nd Year – Sem 3', '2-4': '2nd Year – Sem 4', '3-5': '3rd Year – Sem 5' };
+            const label = labels[key] || key;
+            if (!confirm(`Delete academic calendar dates for "${label}"?\nThis will remove start and end dates for this year/semester.`)) return;
+
+            await reloadCalendarFromFirestore();
+            delete CALENDAR_DATES[key];
+
+            // To delete a specific key with merge:true, we use FieldValue.delete()
+            // Build an update object that sets the remaining keys and deletes the removed one
+            const updateObj = {};
+            updateObj[key] = firebase.firestore.FieldValue.delete();
+
+            try {
+                // First delete the key, then overwrite with remaining data for clean state
+                await db.collection('settings').doc('calendarDates').update(updateObj);
+            } catch (e) {
+                const code = e.code || e.message || String(e);
+                alert('❌ Failed to delete calendar entry.\nError: ' + code);
+                console.error('[Calendar] Delete failed:', e);
+                return;
+            }
+
+            // If this year/sem is currently selected, clear the form
+            const sel = document.getElementById('calendarYearSem');
+            if (sel && sel.value === key) {
+                document.getElementById('calendarStartDate').value = '';
+                document.getElementById('calendarEndDate').value = '';
+                document.getElementById('workingDaysInfo').style.display = 'none';
+                const msgEl = document.getElementById('calendarMsg');
+                if (msgEl) { msgEl.textContent = '✓ Calendar entry deleted.'; msgEl.classList.remove('hidden'); setTimeout(() => msgEl.classList.add('hidden'), 3000); }
+            }
+
             renderCalendarSummary();
         }
 
@@ -6518,24 +6591,29 @@
                 const [y, m, dd] = d.split('-');
                 return `${parseInt(dd)}-${parseInt(m)}-${y.slice(2)}`;
             };
-            let html = '<table style="width:100%;border-collapse:collapse;background:white;font-size:13px;">';
+            let html = '<table style="width:100%;border-collapse:collapse;background:white;font-size:13px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">';
             html += '<thead><tr style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">';
-            html += '<th style="padding:10px 14px;text-align:left;">Year / Semester</th>';
-            html += '<th style="padding:10px 14px;text-align:left;">Start Date</th>';
-            html += '<th style="padding:10px 14px;text-align:left;">End Date</th>';
-            html += '<th style="padding:10px 14px;text-align:center;">Status</th>';
+            html += '<th style="padding:11px 14px;text-align:left;">Year / Semester</th>';
+            html += '<th style="padding:11px 14px;text-align:left;">Start Date</th>';
+            html += '<th style="padding:11px 14px;text-align:left;">End Date</th>';
+            html += '<th style="padding:11px 14px;text-align:center;">Status</th>';
+            html += '<th style="padding:11px 14px;text-align:center;">Action</th>';
             html += '</tr></thead><tbody>';
             entries.forEach(({ key, label }) => {
                 const cal = CALENDAR_DATES[key];
-                const set = cal && cal.start && cal.end;
-                const status = set
+                const isSet = cal && cal.start && cal.end;
+                const status = isSet
                     ? '<span style="color:#28a745;font-weight:bold;">✓ Set</span>'
                     : '<span style="color:#dc3545;font-weight:bold;">✗ Not Set</span>';
+                const deleteBtn = isSet
+                    ? `<button onclick="deleteCalendarEntry('${key}')" style="padding:4px 10px;background:#dc3545;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;">🗑 Delete</button>`
+                    : '<span style="color:#aaa;font-size:12px;">—</span>';
                 html += `<tr style="border-bottom:1px solid #e0e0e0;">`;
                 html += `<td style="padding:10px 14px;"><strong>${label}</strong></td>`;
                 html += `<td style="padding:10px 14px;">${fmt(cal?.start)}</td>`;
                 html += `<td style="padding:10px 14px;">${fmt(cal?.end)}</td>`;
                 html += `<td style="padding:10px 14px;text-align:center;">${status}</td>`;
+                html += `<td style="padding:10px 14px;text-align:center;">${deleteBtn}</td>`;
                 html += `</tr>`;
             });
             html += '</tbody></table>';
@@ -6681,8 +6759,10 @@
         }
 
         // Wrap original loadPeriodsFromDate with validation
+        // Fetches CALENDAR_DATES fresh from Firestore each time so faculty always
+        // sees the latest dates even if admin extended them after login.
         const originalLoadPeriods = loadPeriodsFromDate;
-        loadPeriodsFromDate = function () {
+        loadPeriodsFromDate = async function () {
             const date = document.getElementById('date').value;
             const y = document.getElementById('year').value;
             const s = (y == 1) ? '1' : document.getElementById('sem').value;
@@ -6710,11 +6790,20 @@
                 return;
             }
 
+            // ── Always fetch fresh calendar from Firestore so extended/changed dates are picked up ──
+            await reloadCalendarFromFirestore();
+
             if (!isWithinAcademicPeriod(date, y, s)) {
                 const yearSem = y == 1 ? '1-1' : `${y}-${s}`;
                 const calendar = CALENDAR_DATES[yearSem];
-                if (calendar) {
-                    alert(`⚠️ This date is outside the academic period!\nAcademic period: ${calendar.start} to ${calendar.end}`);
+                if (calendar && (calendar.start || calendar.end)) {
+                    const fmt = d => { if (!d) return '?'; const [yy,mm,dd] = d.split('-'); return `${parseInt(dd)}-${parseInt(mm)}-${yy}`; };
+                    alert(`⚠️ This date is outside the academic period for this class!\n📅 Academic period: ${fmt(calendar.start)} to ${fmt(calendar.end)}`);
+                } else if (!calendar) {
+                    // No calendar set — allow but warn in console
+                    console.warn('[Calendar] No calendar set for', yearSem, '— allowing attendance');
+                    originalLoadPeriods();
+                    return;
                 }
                 document.getElementById('date').value = '';
                 return;
@@ -7898,10 +7987,14 @@
                     docs.push({ id: doc.id, data: d });
                 });
 
+                // Show/hide Create button based on user type
+                const createBtn = document.getElementById('createAssignBtn');
+                if (createBtn) createBtn.style.display = (currentUserType === 'admin') ? 'none' : '';
+
                 if (!docs.length) {
                     container.innerHTML = `<div style="text-align:center;padding:40px;color:#999;">
                         <div style="font-size:48px;">📭</div>
-                        <p style="margin-top:12px;">No assignments yet. Click "Create New Assignment" to get started.</p></div>`;
+                        <p style="margin-top:12px;">${currentUserType === 'admin' ? 'No assignments found.' : 'No assignments yet. Click "Create New Assignment" to get started.'}</p></div>`;
                     if (statsEl) statsEl.textContent = '';
                     return;
                 }

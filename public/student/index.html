@@ -2340,6 +2340,9 @@
                     const d = doc.data();
                     // Match year & semester
                     if (String(d.target?.year) !== y || String(d.target?.semester) !== s) return;
+                    // Hide assignments that expired more than 7 days ago
+                    const daysLeft = calculateDaysLeft(d.dueDate);
+                    if (daysLeft < -7) return;
                     list.push({ id: doc.id, ...d });
                 });
 
@@ -2359,6 +2362,7 @@
                 console.warn('loadStudentAssignments:', e);
             }
         }
+
 
         function displayAssignmentsBySubject(list) {
             const section = document.getElementById('assignSection');

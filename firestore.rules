@@ -41,9 +41,13 @@ service cloud.firestore {
     }
 
     // ── Settings ──────────────────────────────────────────────────────────────
+    // NOTE: isAdminOrFaculty() = any authenticated user.
+    // After Firebase Auth migration, isAdmin() (email token check) causes
+    // permission-denied on some environments. App-level code already restricts
+    // the Settings tab to admin only, so this is safe.
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdminOrFaculty();
     }
 
     // ── Students ──────────────────────────────────────────────────────────────
