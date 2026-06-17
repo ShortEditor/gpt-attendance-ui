@@ -5702,7 +5702,7 @@
                 document.getElementById('adminNewPass').value = '';
                 document.getElementById('adminConfirmPass').value = '';
                 showMessage('adminPassMsg', '✅ Password updated successfully', 'success');
-                alert('✅ Admin password has been updated successfully!');
+                showPasswordSuccessModal('Password Updated!', 'Admin password has been changed successfully.');
             } catch (err) {
                 console.error('❌ changeAdminPassword:', err);
                 const msg = err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential'
@@ -5748,7 +5748,7 @@
                 document.getElementById('profileConfirmPass').value = '';
 
                 showMessage('profileMsg', '✅ Password updated successfully', 'success');
-                alert('✅ Password has been updated successfully!');
+                showPasswordSuccessModal('Password Updated!', 'Your password has been changed successfully.');
             } catch (err) {
                 console.error('❌ changeOwnPassword:', err);
                 const wrongPassCodes = ['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'];
@@ -12248,6 +12248,150 @@
         </div>
     </div>
 
+<!-- ══ Custom Password Success Modal ══ -->
+<div id="pwdSuccessModal" style="
+    display:none;position:fixed;inset:0;z-index:999999;
+    align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.45);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+">
+    <div id="pwdSuccessCard" style="
+        background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+        border-radius:24px;
+        padding:48px 40px 40px;
+        max-width:380px;width:90%;
+        text-align:center;
+        box-shadow:0 30px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.08);
+        position:relative;overflow:hidden;
+        transform:scale(0.7);opacity:0;
+        transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s ease;
+    ">
+        <!-- Glow rings -->
+        <div style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);
+            width:200px;height:200px;border-radius:50%;
+            background:radial-gradient(circle,rgba(100,255,180,0.18) 0%,transparent 70%);
+            pointer-events:none;"></div>
+        <!-- Animated check circle -->
+        <div id="pwdCheckCircle" style="
+            width:90px;height:90px;border-radius:50%;margin:0 auto 24px;
+            background:linear-gradient(135deg,#00c896,#00e5a0);
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 0 0 12px rgba(0,200,150,0.15),0 0 0 24px rgba(0,200,150,0.07);
+            animation:pwdPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;
+        ">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+                <path id="pwdCheck" d="M10 22 L18 31 L34 13" stroke="white" stroke-width="4"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    stroke-dasharray="40" stroke-dashoffset="40"
+                    style="animation:pwdDraw 0.5s ease 0.35s forwards;"/>
+            </svg>
+        </div>
+        <!-- Particles -->
+        <div id="pwdParticles" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;"></div>
+        <!-- Text -->
+        <div id="pwdSuccessTitle" style="
+            font-size:26px;font-weight:800;color:#fff;
+            margin-bottom:10px;letter-spacing:-0.5px;
+            text-shadow:0 2px 20px rgba(0,200,150,0.4);
+        "></div>
+        <div id="pwdSuccessSubtitle" style="
+            font-size:15px;color:rgba(255,255,255,0.7);
+            line-height:1.6;margin-bottom:28px;
+        "></div>
+        <!-- Progress bar -->
+        <div style="background:rgba(255,255,255,0.1);border-radius:99px;height:4px;overflow:hidden;margin-bottom:20px;">
+            <div id="pwdProgressBar" style="
+                height:100%;width:100%;
+                background:linear-gradient(90deg,#00c896,#00e5a0);
+                border-radius:99px;
+                transition:width 3s linear;
+            "></div>
+        </div>
+        <button onclick="closePwdSuccessModal()" style="
+            background:linear-gradient(135deg,#00c896,#00a878);
+            color:white;border:none;border-radius:12px;
+            padding:12px 36px;font-size:15px;font-weight:700;
+            cursor:pointer;letter-spacing:0.3px;
+            box-shadow:0 4px 20px rgba(0,200,150,0.4);
+            transition:transform 0.15s,box-shadow 0.15s;
+        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(0,200,150,0.5)';"
+           onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(0,200,150,0.4)';"
+        >Got it!</button>
+    </div>
+</div>
+<style>
+@keyframes pwdPop{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes pwdDraw{to{stroke-dashoffset:0}}
+@keyframes pwdFadeIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+@keyframes pwdFloat{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}100%{opacity:0;transform:translateY(-120px) rotate(720deg) scale(0.3)}}
+</style>
+<script>
+function showPasswordSuccessModal(title, subtitle) {
+    const modal = document.getElementById('pwdSuccessModal');
+    const card  = document.getElementById('pwdSuccessCard');
+    document.getElementById('pwdSuccessTitle').textContent = title;
+    document.getElementById('pwdSuccessSubtitle').textContent = subtitle;
+    modal.style.display = 'flex';
+    // Animate card in
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            card.style.transform = 'scale(1)';
+            card.style.opacity   = '1';
+        });
+    });
+    // Launch particles
+    _spawnPwdParticles();
+    // Progress bar countdown (3s)
+    const bar = document.getElementById('pwdProgressBar');
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            bar.style.transition = 'width 3s linear';
+            bar.style.width = '0%';
+        });
+    });
+    // Auto-close after 3s
+    clearTimeout(window._pwdModalTimer);
+    window._pwdModalTimer = setTimeout(closePwdSuccessModal, 3000);
+}
+function closePwdSuccessModal() {
+    clearTimeout(window._pwdModalTimer);
+    const modal = document.getElementById('pwdSuccessModal');
+    const card  = document.getElementById('pwdSuccessCard');
+    card.style.transform = 'scale(0.7)';
+    card.style.opacity   = '0';
+    setTimeout(() => { modal.style.display = 'none'; }, 320);
+}
+function _spawnPwdParticles() {
+    const container = document.getElementById('pwdParticles');
+    container.innerHTML = '';
+    const colors = ['#00e5a0','#ffd700','#ff6b9d','#00bfff','#a78bfa','#fb923c'];
+    const shapes = ['●','★','♦','▲','✦'];
+    for (let i = 0; i < 22; i++) {
+        const el = document.createElement('span');
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const shape = shapes[Math.floor(Math.random() * shapes.length)];
+        const size  = 10 + Math.random() * 14;
+        const left  = 10 + Math.random() * 80;
+        const delay = Math.random() * 0.5;
+        const dur   = 0.8 + Math.random() * 0.8;
+        el.textContent = shape;
+        el.style.cssText = `
+            position:absolute;bottom:20%;left:${left}%;
+            font-size:${size}px;color:${color};
+            opacity:0;pointer-events:none;
+            animation:pwdFloat ${dur}s ease-out ${delay}s forwards;
+        `;
+        container.appendChild(el);
+    }
+}
+// Close on backdrop click
+document.getElementById('pwdSuccessModal').addEventListener('click', function(e){
+    if (e.target === this) closePwdSuccessModal();
+});
+</script>
 </body>
 
 </html>
