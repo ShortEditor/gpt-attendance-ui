@@ -9,6 +9,9 @@
     <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -17,66 +20,75 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f7f9fb;
+            color: #191c1e;
             min-height: 100vh;
-            padding: 20px;
+            padding: 20px 20px 80px;
         }
 
         .container {
-            max-width: 500px;
+            max-width: 550px;
             margin: 0 auto;
         }
 
         .header {
-            background: white;
+            background: #ffffff;
             border-radius: 20px 20px 0 0;
-            padding: 14px 20px 18px;
+            padding: 24px 20px;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            border-bottom: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
         }
 
         .header h1 {
-            color: #667eea;
-            font-size: 17px;
-            margin-bottom: 3px;
+            color: #002045;
+            font-family: 'Manrope', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 4px;
         }
 
         .header p {
-            color: #666;
+            color: #43474e;
             font-size: 13px;
+            font-weight: 500;
         }
 
         .header-college {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2a5298;
-            letter-spacing: 0.3px;
-            margin-bottom: 1px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: #1960a3;
+            letter-spacing: -0.2px;
+            margin-bottom: 2px;
         }
 
         .credits-badge {
             display: inline-block;
-            background: #f0f4ff;
-            border: 1px solid #d0d9ff;
+            background: #d3e4ff;
+            border: 1px solid #adc7f7;
             border-radius: 20px;
-            padding: 3px 14px;
-            margin: 4px 0 0;
+            padding: 4px 14px;
+            margin: 8px 0 0;
             font-size: 11px;
-            color: #555;
+            color: #001c38;
+            font-weight: 600;
         }
 
         .credits-badge .credits-name {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
-            color: #2a5298;
+            color: #002045;
         }
 
         .content {
-            background: white;
+            background: #ffffff;
             border-radius: 0 0 20px 20px;
-            padding: 30px 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
             margin-bottom: 20px;
         }
 
@@ -86,26 +98,45 @@
 
         .pin-input {
             width: 100%;
-            padding: 15px;
-            font-size: 20px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
+            padding: 16px;
+            font-size: 22px;
+            font-family: 'JetBrains Mono', monospace;
+            border: 2px solid #c4c6cf;
+            border-radius: 12px;
             text-align: center;
-            letter-spacing: 5px;
+            letter-spacing: 4px;
             margin: 20px 0;
+            background: #f2f4f6;
+            color: #002045;
+            transition: all 0.25s ease;
+        }
+
+        .pin-input:focus {
+            border-color: #1960a3;
+            background: #ffffff;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(25, 96, 163, 0.15);
         }
 
         .btn {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            padding: 16px;
+            background: #002045;
+            color: #ffffff;
             border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
+            border-radius: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 32, 69, 0.15);
+        }
+
+        .btn:hover {
+            background: #1960a3;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(25, 96, 163, 0.2);
         }
 
         .btn:active {
@@ -115,48 +146,59 @@
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
 
         .error {
-            background: #fee;
-            border: 2px solid #fcc;
-            color: #c33;
-            padding: 15px;
+            background: #ffdad6;
+            border: 1px solid #ffb4ab;
+            color: #93000a;
+            padding: 14px;
             border-radius: 10px;
             margin: 15px 0;
             display: none;
+            font-size: 13px;
+            font-weight: 600;
         }
 
         .success {
-            background: #efe;
-            border: 2px solid #cfc;
-            color: #3c3;
-            padding: 15px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 14px;
             border-radius: 10px;
             margin: 15px 0;
+            font-size: 13px;
+            font-weight: 600;
         }
 
         .tabs {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             margin-bottom: 20px;
+            background: #f2f4f6;
+            padding: 4px;
+            border-radius: 12px;
         }
 
         .tab {
             flex: 1;
-            padding: 12px;
-            background: #f5f5f5;
+            padding: 10px 4px;
+            background: transparent;
             border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #43474e;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
         .tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #ffffff;
+            color: #002045;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
 
         .tab-content {
@@ -168,17 +210,19 @@
         }
 
         .info-card {
-            background: #f8f9ff;
-            border-radius: 12px;
-            padding: 10px 16px;
-            margin-bottom: 12px;
+            background: #f7f9fb;
+            border: 1px solid #e0e3e5;
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 14px;
         }
 
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid #e0e0e0;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e3e5;
         }
 
         .info-row:last-child {
@@ -186,39 +230,57 @@
         }
 
         .info-label {
-            color: #666;
+            color: #43474e;
             font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .info-value {
-            color: #333;
-            font-weight: 600;
-            font-size: 13px;
+            color: #002045;
+            font-weight: 700;
+            font-size: 14px;
         }
 
         .month-selector {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 14px;
+            border: 1px solid #c4c6cf;
+            border-radius: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #002045;
             margin-bottom: 20px;
+            background: #ffffff;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .month-selector:focus {
+            border-color: #1960a3;
+            box-shadow: 0 0 0 3px rgba(25, 96, 163, 0.1);
         }
 
         .calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
+            gap: 6px;
             margin-top: 20px;
         }
 
         .calendar-header {
             text-align: center;
-            font-weight: 600;
-            padding: 10px 5px;
-            background: #f5f5f5;
-            border-radius: 5px;
-            font-size: 12px;
+            font-weight: 700;
+            padding: 8px 0;
+            background: #eceef0;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #43474e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .calendar-day {
@@ -227,25 +289,29 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 14px;
-            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid #e0e3e5;
+            background: #ffffff;
+            transition: all 0.15s ease;
         }
 
         .calendar-day .date {
-            font-size: 11px;
-            color: #666;
+            font-size: 10px;
+            color: #43474e;
             margin-bottom: 2px;
+            font-weight: 500;
         }
 
         .calendar-day .status {
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 16px;
+            font-weight: 800;
         }
 
         .calendar-day.present {
             background: #e8f5e9;
-            border-color: #4caf50;
+            border-color: #c8e6c9;
         }
 
         .calendar-day.present .status {
@@ -254,7 +320,7 @@
 
         .calendar-day.absent {
             background: #ffebee;
-            border-color: #f44336;
+            border-color: #ffcdd2;
         }
 
         .calendar-day.absent .status {
@@ -262,38 +328,43 @@
         }
 
         .calendar-day.holiday {
-            background: #f5f5f5;
-            opacity: 0.5;
+            background: #f2f4f6;
+            border-color: #e0e3e5;
+            opacity: 0.6;
         }
 
         .periods-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
-            margin-top: 20px;
+            gap: 6px;
+            margin-top: 15px;
         }
 
         .period-card {
             text-align: center;
-            padding: 15px 5px;
+            padding: 12px 4px;
             border-radius: 10px;
-            border: 2px solid #e0e0e0;
+            border: 1px solid #e0e3e5;
+            background: #ffffff;
+            transition: all 0.2s ease;
         }
 
         .period-card .period-num {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #43474e;
+            margin-bottom: 4px;
+            text-transform: uppercase;
         }
 
         .period-card .period-status {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 800;
         }
 
         .period-card.present {
             background: #e8f5e9;
-            border-color: #4caf50;
+            border-color: #c8e6c9;
         }
 
         .period-card.present .period-status {
@@ -302,7 +373,7 @@
 
         .period-card.absent {
             background: #ffebee;
-            border-color: #f44336;
+            border-color: #ffcdd2;
         }
 
         .period-card.absent .period-status {
@@ -311,49 +382,59 @@
 
         .period-card.pending {
             background: #fff8e1;
-            border-color: #ffa726;
+            border-color: #ffe082;
         }
 
         .period-card.pending .period-status {
             color: #f57c00;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .logout-btn {
             width: 100%;
-            padding: 12px;
-            background: #f44336;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 14px;
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+            border-radius: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
             margin-top: 20px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #c62828;
+            color: #ffffff;
+            border-color: #c62828;
         }
 
         .unit-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+            border: 1px solid #e0e3e5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.01);
         }
 
         .unit-header {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+            font-family: 'Manrope', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            color: #002045;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f2f4f6;
         }
 
         .subject-mark {
             display: flex;
             justify-content: space-between;
-            padding: 12px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 10px 0;
+            border-bottom: 1px solid #f2f4f6;
             align-items: center;
         }
 
@@ -362,22 +443,24 @@
         }
 
         .subject-name {
-            font-weight: 500;
-            color: #333;
+            font-weight: 600;
+            color: #191c1e;
+            font-size: 13px;
         }
 
         .subject-code {
-            font-size: 12px;
-            color: #666;
-            margin-top: 2px;
+            font-size: 11px;
+            color: #43474e;
+            margin-top: 1px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .mark-value {
-            font-size: 20px;
-            font-weight: bold;
-            padding: 8px 16px;
+            font-size: 16px;
+            font-weight: 800;
+            padding: 6px 12px;
             border-radius: 8px;
-            min-width: 60px;
+            min-width: 50px;
             text-align: center;
         }
 
@@ -397,110 +480,88 @@
         }
 
         .mark-na {
-            background: #fff8e1;
-            color: #f57c00;
+            background: #eceef0;
+            color: #43474e;
         }
 
         .loading {
             text-align: center;
             padding: 40px;
-            color: #666;
+            color: #43474e;
+            font-weight: 600;
+            font-size: 14px;
         }
 
         .loading::after {
             content: '';
             display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #eceef0;
+            border-top: 3px solid #1960a3;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .no-data {
             text-align: center;
-            padding: 40px 20px;
-            color: #999;
+            padding: 30px 10px;
+            color: #43474e;
+            font-size: 13px;
+            font-weight: 500;
         }
 
         .percentage {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
+            background: #002045;
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 800;
             text-align: center;
             margin: 16px 0;
-            padding: 18px 10px;
+            padding: 16px 10px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(102,126,234,0.35);
-            letter-spacing: 1px;
+            box-shadow: 0 4px 16px rgba(0, 32, 69, 0.15);
+            font-family: 'Manrope', sans-serif;
         }
 
         .hidden {
             display: none !important;
         }
 
-        /* ══ Notifications ═══════════════════════════════════════════════ */
-
-        /* 1. Scrolling Message Bar */
+        /* ══ Notifications & Banner ══ */
         #scrollBar {
             display: none;
             position: sticky;
             top: 0;
             z-index: 900;
-            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
-            color: white;
-            height: 40px;
-            line-height: 40px;
+            background: #ba1a1a;
+            color: #ffffff;
+            height: 36px;
+            line-height: 36px;
             overflow: hidden;
             white-space: nowrap;
-            box-shadow: 0 2px 10px rgba(244, 67, 54, 0.4);
+            box-shadow: 0 2px 8px rgba(186, 26, 26, 0.2);
+            font-size: 12px;
+            font-weight: 700;
         }
 
         #scrollBar .scroll-track {
             display: inline-block;
             animation: scrollLeft 30s linear infinite;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.3px;
             padding-left: 100%;
         }
 
-        #scrollBar .scroll-track.slow {
-            animation-duration: 40s;
-        }
-
-        #scrollBar .scroll-track.medium {
-            animation-duration: 30s;
-        }
-
-        #scrollBar .scroll-track.fast {
-            animation-duration: 20s;
-        }
-
         @keyframes scrollLeft {
-            from {
-                transform: translateX(0);
-            }
-
-            to {
-                transform: translateX(-100%);
-            }
+            from { transform: translateX(0); }
+            to { transform: translateX(-100%); }
         }
 
-        /* 2. Notification Cards */
         .notif-section-header {
             display: flex;
             align-items: center;
@@ -512,23 +573,22 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: #e53935;
+            background: #ba1a1a;
             color: white;
-            font-size: 11px;
-            font-weight: 700;
-            min-width: 20px;
-            height: 20px;
-            border-radius: 10px;
-            padding: 0 5px;
-            line-height: 1;
+            font-size: 10px;
+            font-weight: 800;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            padding: 0 4px;
         }
 
-        /* ── Notifications Accordion ── */
         .notif-accordion-header {
-            background: linear-gradient(135deg, #7c4dff 0%, #b39ddb 100%);
+            background: #002045;
             color: white;
-            padding: 12px 16px;
-            border-radius: 10px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-family: 'Manrope', sans-serif;
             font-weight: 700;
             font-size: 14px;
             cursor: pointer;
@@ -536,139 +596,105 @@
             justify-content: space-between;
             align-items: center;
             user-select: none;
-            box-shadow: 0 2px 8px rgba(124,77,255,0.25);
+            box-shadow: 0 4px 12px rgba(0, 32, 69, 0.15);
         }
 
         .notif-accordion-body {
-            border: 1px solid #d1c4e9;
+            border: 1px solid #e0e3e5;
             border-top: none;
-            border-radius: 0 0 10px 10px;
-            padding: 12px;
+            border-radius: 0 0 12px 12px;
+            padding: 14px;
             background: white;
         }
 
-        .notif-accordion-body.hidden { display: none; }
-
         .notif-card {
-            border-radius: 8px;
-            padding: 14px 16px;
+            border-radius: 10px;
+            padding: 12px 14px;
             margin-bottom: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 4px solid #667eea;
-            cursor: default;
-            transition: box-shadow 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            border-left: 4px solid #1960a3;
+            transition: all 0.2s ease;
         }
 
         .notif-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+            transform: translateX(4px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
         }
 
         .notif-card.pri-high {
-            background: #ffebee;
-            border-left-color: #e53935;
+            background: #ffdad6;
+            border-left-color: #ba1a1a;
         }
 
         .notif-card.pri-medium {
             background: #fff3e0;
-            border-left-color: #fb8c00;
+            border-left-color: #f57c00;
         }
 
         .notif-card.pri-low {
             background: #e3f2fd;
-            border-left-color: #1e88e5;
+            border-left-color: #1960a3;
         }
 
         .notif-card-title {
             font-weight: 700;
-            font-size: 15px;
-            color: #2a5298;
+            font-size: 14px;
+            color: #002045;
             margin-bottom: 4px;
         }
 
         .notif-card-meta {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 10px;
+            font-size: 11px;
+            color: #43474e;
+            margin-bottom: 8px;
         }
 
         .notif-view-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #002045;
             color: white;
             border: none;
-            padding: 7px 16px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.15s, transform 0.15s;
+            transition: all 0.15s;
         }
 
         .notif-view-btn:hover {
-            opacity: 0.88;
-            transform: scale(1.03);
+            background: #1960a3;
         }
 
-        /* 3. Modals */
         .sn-modal-backdrop {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 32, 69, 0.6);
             z-index: 9990;
             align-items: center;
             justify-content: center;
             padding: 16px;
-            animation: fadeInBackdrop 0.2s ease;
-        }
-
-        @keyframes fadeInBackdrop {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
+            backdrop-filter: blur(4px);
         }
 
         .sn-modal {
             background: white;
-            border-radius: 15px;
-            max-width: 600px;
+            border-radius: 16px;
+            max-width: 500px;
             width: 100%;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes popIn {
-            from {
-                transform: scale(0.88);
-                opacity: 0;
-            }
-
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         .sn-modal-head {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #002045;
             color: white;
-            padding: 18px 20px;
-            border-radius: 15px 15px 0 0;
+            padding: 16px 20px;
+            border-radius: 16px 16px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
-        }
-
-        #notifPopupModal .sn-modal-head {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
 
         .sn-modal-body {
@@ -676,98 +702,51 @@
         }
 
         .sn-close-btn {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             border: none;
             color: white;
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             font-size: 18px;
             cursor: pointer;
-            line-height: 1;
-            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: background 0.15s;
         }
 
         .sn-close-btn:hover {
-            background: rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.3);
         }
 
-        /* 4. Timetable inside modal */
         .sn-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            font-size: 12px;
             border-radius: 8px;
             overflow: hidden;
+            border: 1px solid #e0e3e5;
         }
 
         .sn-table thead tr {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #002045;
             color: white;
         }
 
-        .sn-table th {
-            padding: 12px 10px;
+        .sn-table th, .sn-table td {
+            padding: 10px 8px;
             text-align: left;
-            font-weight: 600;
         }
 
         .sn-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e3e5;
         }
 
         .sn-table tbody tr:nth-child(even) {
-            background: #f8f9fa;
+            background: #f7f9fb;
         }
 
-        .sn-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .sn-table tbody tr.today-row {
-            background: #fff9c4;
-        }
-
-        /* 5. Modal action buttons */
-        .sn-btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: opacity 0.15s, transform 0.15s;
-        }
-
-        .sn-btn-primary:hover {
-            opacity: 0.88;
-            transform: translateY(-1px);
-        }
-
-        .sn-btn-secondary {
-            background: #e9ecef;
-            color: #495057;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-
-        .sn-btn-secondary:hover {
-            background: #dee2e6;
-        }
-
-        /* ════════════════════════════════════════════════════════════ */
-
-        /* ── Update Banner ──────────────────────────────────────────── */
         #updateBanner {
             display: none;
             position: fixed;
@@ -775,23 +754,10 @@
             left: 0;
             right: 0;
             z-index: 99999;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #002045;
             color: white;
-            padding: 14px 20px;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
-            animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-110%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            padding: 12px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
         #updateBanner .ub-inner {
@@ -802,171 +768,97 @@
             margin: 0 auto;
         }
 
-        #updateBanner .ub-emoji {
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-
-        #updateBanner .ub-text {
-            flex: 1;
-        }
-
-        #updateBanner .ub-title {
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        #updateBanner .ub-sub {
-            font-size: 11px;
-            opacity: 0.88;
-            margin-top: 2px;
-        }
-
         #updateBanner .ub-btn-now {
-            background: white;
-            color: #764ba2;
+            background: #d3e4ff;
+            color: #001c38;
             border: none;
-            padding: 7px 16px;
-            border-radius: 20px;
+            padding: 6px 14px;
+            border-radius: 12px;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 12px;
             cursor: pointer;
-            white-space: nowrap;
-            transition: transform 0.15s;
-        }
-
-        #updateBanner .ub-btn-now:hover {
-            transform: scale(1.05);
         }
 
         #updateBanner .ub-btn-later {
             background: transparent;
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            padding: 7px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
             cursor: pointer;
-            white-space: nowrap;
         }
 
-        /* ── Assignments Accordion ───────────────────────────────────── */
         .assign-accordion-header {
-            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            background: #1960a3;
             color: white;
-            padding: 13px 16px;
-            border-radius: 10px;
+            padding: 14px 16px;
+            border-radius: 12px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-family: 'Manrope', sans-serif;
             font-weight: 700;
-            font-size: 15px;
-            user-select: none;
-            transition: box-shadow 0.2s;
-        }
-
-        .assign-accordion-header:hover {
-            box-shadow: 0 4px 15px rgba(42, 82, 152, 0.3);
+            font-size: 14px;
         }
 
         .assign-accordion-body {
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e0e3e5;
             border-top: none;
-            border-radius: 0 0 10px 10px;
-            padding: 10px;
-            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+            padding: 12px;
+            background: #f7f9fb;
         }
 
         .assign-subject-frame {
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            margin-bottom: 10px;
+            border: 1px solid #e0e3e5;
         }
 
         .assign-subject-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: #002045;
             color: white;
-            padding: 9px 14px;
+            padding: 8px 12px;
             font-weight: 700;
-            font-size: 13px;
-            letter-spacing: 0.3px;
+            font-size: 12px;
         }
 
         .assign-card {
-            padding: 12px 14px;
-            border-bottom: 1px solid #f0f0f0;
-            border-left: 4px solid #ccc;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f2f4f6;
+            border-left: 4px solid #c4c6cf;
         }
 
-        .assign-card:last-child {
-            border-bottom: none;
-        }
-
-        .assign-card.urgent {
-            border-left-color: #dc3545;
-        }
-
-        .assign-card.soon {
-            border-left-color: #fd7e14;
-        }
-
-        .assign-card.ontime {
-            border-left-color: #28a745;
-        }
-
-        .assign-card.expired {
-            border-left-color: #aaa;
-            opacity: 0.75;
-        }
-
-        .assign-badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-top: 4px;
-        }
+        .assign-card.urgent { border-left-color: #ba1a1a; }
+        .assign-card.soon { border-left-color: #f57c00; }
+        .assign-card.ontime { border-left-color: #2e7d32; }
 
         .assign-view-btn {
-            margin-top: 8px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin-top: 6px;
+            background: #002045;
             color: white;
             border: none;
-            padding: 6px 14px;
-            border-radius: 7px;
-            font-size: 12px;
-            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.15s, transform 0.15s;
         }
 
-        .assign-view-btn:hover {
-            opacity: 0.88;
-            transform: scale(1.03);
+        /* Global overrides for any hardcoded inline styling */
+        h2, h3, h4 {
+            color: #002045 !important;
+            font-family: 'Manrope', sans-serif !important;
         }
-
-        /* ── Assignment Detail Modal ────────────────────────────────────── */
-        #assignDetailModal .sn-modal-head {
-            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
-        }
-
-        .assign-questions-box {
-            background: #f5f6fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 14px 16px;
-            white-space: pre-wrap;
-            font-family: inherit;
-            font-size: 13px;
-            line-height: 1.7;
-            color: #333;
-            margin-top: 8px;
-            max-height: 240px;
-            overflow-y: auto;
+        
+        .sn-modal-head[style*="background:linear-gradient"],
+        .sn-modal-head[style*="background: linear-gradient"] {
+            background: #002045 !important;
+            color: #ffffff !important;
         }
 
         /* ───────────────────────────────────────────────────────────────── */
@@ -1102,39 +994,33 @@
         <!-- Login Screen -->
         <div id="loginScreen">
             <div class="header">
-                <h1>🎓 GPT Dharmavaram</h1>
-                <p>Student Attendance Portal</p>
+                <div class="header-college">GPT DHARMAVARAM</div>
+                <h1>Student Portal</h1>
+                <p>Attendance & Academic Performance</p>
             </div>
             <div class="content login-screen">
-                <p style="color: #666; margin-bottom: 20px;">Enter your PIN to view attendance</p>
+                <p style="color: #43474e; font-size: 13px; font-weight: 600; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Enter your PIN to view attendance</p>
                 <input type="text" id="pinInput" class="pin-input" placeholder="Enter PIN" maxlength="20"
                     autocomplete="off">
                 <div id="loginError" class="error"></div>
                 <button class="btn" onclick="login()">View My Attendance</button>
-                <p style="color: #999; font-size: 12px; margin-top: 20px;">👨‍👩‍👧 Parent-Friendly • No Password Needed
-                </p>
+                <p style="color: #6c7075; font-size: 11px; font-weight: 500; margin-top: 20px;">👨‍👩‍👧 Parent-Friendly • No Password Needed</p>
             </div>
         </div>
 
         <!-- Main App -->
         <div id="mainApp" class="hidden">
-            <div class="header" style="display:flex;flex-direction:column;">
-                <div class="header-college" style="text-align:center;">GPT, Dharmavaram</div>
-                <h1>🎓 My Attendance</h1>
-                <p id="studentInfo"></p>
+            <div class="header" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <div class="header-college">GPT DHARMAVARAM</div>
+                <h1>My Attendance</h1>
+                <p id="studentInfo" style="font-weight: 600; color: #43474e;"></p>
                 <button id="installBtn" class="hidden" onclick="installApp()"
-                    style="margin-top: 6px; padding: 6px 14px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                    style="margin-top: 6px; padding: 6px 14px; background: #002045; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase;">
                     📱 Install App
                 </button>
-                <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;">
-                    <span style="display:inline-block;
-                                 background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-                                 border-radius:20px;
-                                 padding:5px 16px;
-                                 font-size:13px;font-weight:500;color:#fff;
-                                 box-shadow:0 2px 6px rgba(102,126,234,0.4);
-                                 white-space:nowrap;letter-spacing:0.2px;">
-                        Developed by <strong>Joshi</strong>, SL/CME
+                <div style="margin-top: 8px;">
+                    <span class="credits-badge" style="display: inline-block; background: #e3f2fd; border: 1px solid #adc7f7; border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 600; color: #002045;">
+                        Developed by <strong style="color: #1960a3;">Joshi</strong>, SL/CME
                     </span>
                 </div>
             </div>
@@ -1150,19 +1036,19 @@
                 <div id="todayTab" class="tab-content active">
 
                     <!-- ── Assignments Accordion ── -->
-                    <div id="assignSection" style="display:none;margin-bottom:16px;">
+                    <div id="assignSection" style="display:none; margin-bottom:16px;">
                         <div class="assign-accordion-header" onclick="toggleAssignAccordion()">
-                            <span id="assignAccordionTitle">📝 Assign/Material</span>
-                            <span id="assignAccordionArrow" style="transition:transform 0.2s;">▼</span>
+                            <span id="assignAccordionTitle">📝 Assignments & Materials</span>
+                            <span id="assignAccordionArrow" style="transition: transform 0.2s;">▼</span>
                         </div>
                         <div id="assignAccordionBody" class="assign-accordion-body hidden"></div>
                     </div>
 
                     <!-- ── Notification Cards Section ── -->
-                    <div id="notifSection" style="display:none;margin-bottom:16px;">
+                    <div id="notifSection" style="display:none; margin-bottom:16px;">
                         <div class="notif-accordion-header" onclick="toggleNotifAccordion()">
                             <span id="notifAccordionTitle">🔔 Notifications</span>
-                            <span id="notifAccordionArrow" style="transition:transform 0.25s;">&#9660;</span>
+                            <span id="notifAccordionArrow" style="transition: transform 0.25s;">&#9660;</span>
                         </div>
                         <div id="notifAccordionBody" class="notif-accordion-body hidden">
                             <div id="notifCards"></div>
@@ -1170,13 +1056,11 @@
                     </div>
 
                     <!-- Cumulative Attendance Card -->
-                    <div class="info-card"
-                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
+                    <div class="info-card" style="background: #002045; color: white; border: none; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,32,69,0.15);">
                         <div style="text-align: center; padding: 10px 0;">
-                            <div style="font-size: 12px; opacity: 0.9; margin-bottom: 3px;">Overall Attendance (Till Today)</div>
-                            <div id="cumulativePercentage" style="font-size: 36px; font-weight: bold; margin: 5px 0;">
-                                --%</div>
-                            <div id="cumulativeStats" style="font-size: 11px; opacity: 0.9;">Loading...</div>
+                            <div style="font-size: 11px; opacity: 0.85; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Overall Attendance (Till Today)</div>
+                            <div id="cumulativePercentage" style="font-size: 36px; font-weight: 800; font-family: 'Manrope', sans-serif; margin: 4px 0;">--%</div>
+                            <div id="cumulativeStats" style="font-size: 11px; opacity: 0.85; font-weight: 600;">Loading...</div>
                         </div>
                     </div>
 
@@ -1192,13 +1076,14 @@
                     </div>
                     <div id="todayLoading" class="loading hidden">Loading today's attendance...</div>
                     <div id="todayContent" class="hidden">
-                        <h3 style="margin: 20px 0 10px; color: #333;">Period-wise Status:</h3>
+                        <h3 style="margin: 20px 0 10px; color: #002045; font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Period-wise Status:</h3>
                         <div class="periods-grid" id="periodsGrid"></div>
                     </div>
                     <div id="todayNoData" class="no-data hidden">
                         <div id="todayNoDataInner">
-                            <p>🏖️ No attendance today</p>
-                            <p style="font-size:14px;margin-top:10px;">May be a holiday or attendance not yet marked</p>
+                            <p style="font-size: 24px; margin-bottom: 8px;">🏖️</p>
+                            <p style="font-weight: 700; color: #002045; font-size: 14px;">No attendance marked for today</p>
+                            <p style="font-size: 12px; margin-top: 6px; color: #43474e;">It may be a holiday, weekend, or attendance has not yet been submitted by the faculty.</p>
                         </div>
                     </div>
                 </div>
@@ -1237,38 +1122,39 @@
                         <div id="calendarGrid" class="calendar"></div>
                     </div>
                     <div id="monthlyNoData" class="no-data hidden">
-                        <p>📅 No attendance data for this month</p>
-                        <p style="font-size: 14px; margin-top: 10px;">Select another month or check back later</p>
+                        <p style="font-size: 24px; margin-bottom: 8px;">📅</p>
+                        <p style="font-weight: 700; color: #002045; font-size: 14px;">No attendance data for this month</p>
+                        <p style="font-size: 12px; margin-top: 6px; color: #43474e;">Please select another month or check back later.</p>
                     </div>
                 </div>
 
                 <!-- Unit Marks Tab (THIRD) -->
                 <div id="unitmarksTab" class="tab-content">
-                    <h3 style="margin-bottom: 20px; color: #333;">📝 Unit Test Marks</h3>
+                    <h3 style="margin-bottom: 20px; color: #002045; font-family: 'Manrope', sans-serif; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">📝 Unit Test Marks</h3>
 
                     <div id="unitMarksContent"></div>
 
                     <div id="unitMarksNoData" class="no-data hidden">
-                        <p>📝 No unit marks available</p>
-                        <p style="font-size: 14px; margin-top: 10px;">Unit test marks will appear here once faculty
-                            posts them</p>
+                        <p style="font-size: 24px; margin-bottom: 8px;">📝</p>
+                        <p style="font-weight: 700; color: #002045; font-size: 14px;">No unit marks available</p>
+                        <p style="font-size: 12px; margin-top: 6px; color: #43474e;">Unit test marks will appear here once the faculty posts them.</p>
                     </div>
                 </div>
 
                 <!-- PQP Tab (FOURTH) -->
                 <div id="pqpTab" class="tab-content">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                        <h3 style="color:#6a1b9a;margin:0;">📚 Previous Question Papers</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: #002045; font-family: 'Manrope', sans-serif; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">📚 Previous Question Papers</h3>
                     </div>
-                    <div id="pqpLoading" style="text-align:center;padding:30px;color:#999;">
-                        <div style="font-size:24px;margin-bottom:8px;">⏳</div>
-                        <div>Loading PQP materials…</div>
+                    <div id="pqpLoading" style="text-align: center; padding: 40px; color: #43474e;">
+                        <div style="font-size: 32px; margin-bottom: 8px; animation: spin 2s linear infinite; display: inline-block;">⏳</div>
+                        <div style="font-weight: 600; font-size: 13px;">Loading question papers...</div>
                     </div>
-                    <div id="pqpList" style="display:none;"></div>
-                    <div id="pqpEmpty" style="display:none;text-align:center;padding:40px 20px;">
-                        <div style="font-size:48px;margin-bottom:12px;">📚</div>
-                        <div style="font-size:16px;font-weight:600;color:#6a1b9a;">No PQP materials yet</div>
-                        <div style="font-size:13px;color:#999;margin-top:6px;">Previous Question Papers will appear here once they are added.</div>
+                    <div id="pqpList" style="display: none;"></div>
+                    <div id="pqpEmpty" style="display: none; text-align: center; padding: 40px 20px;">
+                        <div style="font-size: 40px; margin-bottom: 12px;">📚</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #002045;">No materials uploaded yet</div>
+                        <div style="font-size: 12px; color: #43474e; margin-top: 6px;">Previous Question Papers and study materials will appear here once they are added by the administrator.</div>
                     </div>
                 </div>
 
