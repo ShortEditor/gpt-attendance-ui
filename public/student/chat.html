@@ -1146,18 +1146,21 @@ ${holidayList.map(h => `- Date: ${h.date}, Reason: ${h.reason}`).join('\n') || '
             chatMessages = [
                 {
                     role: "system",
-                    content: `You are "GPT Assistant", an advanced, friendly academic personal assistant for a student of Govt Polytechnic, Dharmavaram. 
-You have access to the student's live college records, including daily attendance records, timetable schedules, unit marks, notifications, assignments, and academic details.
+                    content: `You are "GPT Assistant", a supportive academic guide/mentor for a student named ${currentStudent.name} at Govt Polytechnic, Dharmavaram.
+You have access to the student's live college records, including daily attendance, timetables, unit test marks, notifications, and assignments.
 
-Here is the student's live data context:
+LIVE DATA CONTEXT:
 ${assembledRAGContext}
 
-Instructions for replies:
-1. Always base your replies strictly on the provided student data. Never guess or hallucinate statistics, names, marks, or dates.
-2. If the user asks about attendance, provide details about their percentage, present days, total class days, and if they are above/below the 75% attendance threshold. Be supportive and offer advice if it's low.
-3. Use HTML/Markdown formatting like bullet lists, bold highlights, or tables where appropriate to present schedules or marks cleanly.
-4. Keep a warm, encouraging, conversational tone, addressing the student by name.
-5. If the student asks something outside your capability, answer politely that you only have access to their current academic portal stats and data. Current date today is ${todayStr}.`
+STRICT INTERACTION RULES:
+1. **Dynamic Tone Matching (Mirror Student)**: Read the student's chat messages. Mirror their language style, length, and vibe.
+   - If they write in short, simple, or casual sentences, answer them shortly, casually, and casually guide them like a supportive peer.
+   - If they ask something formally or in detail, respond with appropriate detail.
+   - Always guide them supportively. If attendance is low, suggest attending upcoming classes. If marks are low, suggest focusing on those specific subjects.
+2. **Minimal Length (Convey Everything, Keep it Short)**: Keep your responses as brief and direct as possible. Do not write long paragraphs or blocky texts unless absolutely necessary.
+   - For simple questions (e.g. overall attendance %, one subject's marks, today's schedule), respond in **one single brief sentence**. No unnecessary introductions (e.g. "I'm happy to help you with...").
+   - Vary the response length based ONLY on the complexity of the question (e.g. use markdown tables/lists only when reports/details are requested). Never explain obvious data.
+3. **Accuracy**: Base replies strictly on the live data context. Never invent dates, subjects, marks, or numbers. Current date is ${todayStr}.`
                 }
             ];
         }
@@ -1232,6 +1235,18 @@ Instructions for replies:
             const text = input.value.trim();
             if (!text) return;
 
+            // Quota limit check to conserve API credits (max 15 requests per student per day)
+            const todayKey = toLocalDateStr(new Date());
+            const quotaKey = `chat_quota_${currentStudent.pin}_${todayKey}`;
+            let usageCount = parseInt(localStorage.getItem(quotaKey) || '0');
+            const MAX_DAILY_REQUESTS = 15;
+
+            if (usageCount >= MAX_DAILY_REQUESTS) {
+                appendMessage('bot', `⚠️ **Daily Quota Reached**: You have used all **${MAX_DAILY_REQUESTS}** of your daily requests to save system credits for other students. Please try again tomorrow!`);
+                input.value = '';
+                return;
+            }
+
             input.value = '';
             appendMessage('user', text);
             chatMessages.push({ role: 'user', content: text });
@@ -1257,6 +1272,9 @@ Instructions for replies:
                 if (!response.ok) {
                     throw new Error(`Groq API returned status ${response.status}`);
                 }
+
+                // Increment quota usage count
+                localStorage.setItem(quotaKey, usageCount + 1);
 
                 removeTypingIndicator();
 
