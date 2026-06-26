@@ -819,6 +819,7 @@
         let allNotifications = [];
         let allAssignments = [];
         let MIN_PERIODS_FOR_PRESENT = 3;
+        let isGenerating = false;
 
         // RAG Context
         let assembledRAGContext = "";
@@ -1295,9 +1296,21 @@ STRICT INTERACTION RULES:
         }
 
         async function sendMessage() {
+            if (isGenerating) return;
+
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if (!text) return;
+
+            isGenerating = true;
+            input.disabled = true;
+            const sendBtn = document.getElementById('sendBtn');
+            if (sendBtn) sendBtn.disabled = true;
+            const chips = document.querySelectorAll('.chip');
+            chips.forEach(c => {
+                c.style.opacity = '0.5';
+                c.style.pointerEvents = 'none';
+            });
 
             input.value = '';
             appendMessage('user', text);
@@ -1361,6 +1374,15 @@ STRICT INTERACTION RULES:
                 console.error(err);
                 removeTypingIndicator();
                 appendMessage('bot', `⚠️ **Error**: Failed to communicate with AI Assistant.\n*Reason: ${err.message || 'Check connection/API Key'}*`);
+            } finally {
+                isGenerating = false;
+                input.disabled = false;
+                if (sendBtn) sendBtn.disabled = false;
+                chips.forEach(c => {
+                    c.style.opacity = '1';
+                    c.style.pointerEvents = 'auto';
+                });
+                input.focus();
             }
         }
 
