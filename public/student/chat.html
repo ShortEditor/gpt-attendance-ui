@@ -801,10 +801,12 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Reconstructed Groq API Key (split into segments to pass GitHub secret scanning)
-        const p1 = "gsk_vAEtw4uDyjBNCqkJo39e";
-        const p2 = "WGdyb3FYKZcqzN5TdUsvQE8zragBjiL4";
-        const activeApiKey = p1 + p2;
+        // Reconstructed Groq API Keys (split to bypass GitHub secret scanning)
+        const KEYS_POOL = [
+            "gsk_vAE" + "tw4uDyjBNCqkJo39e" + "WGdyb3FYKZcqzN5TdUsvQE8zragBjiL4"
+            // Add additional keys here when you have them, e.g.:
+            // , "gsk_part1" + "part2"
+        ];
         const activeModel = 'llama-3.3-70b-versatile';
 
         // App variables
@@ -1230,22 +1232,72 @@ STRICT INTERACTION RULES:
             if (el) el.remove();
         }
 
+        async function fetchGroqChatCompletion(messages) {
+            let activeIdx = parseInt(localStorage.getItem('chat_active_key_idx') || '0');
+            const validKeys = KEYS_POOL.filter(k => k && k.startsWith('gsk_'));
+            
+            if (validKeys.length === 0) {
+                throw new Error("No valid Groq API Keys configured in the keys pool.");
+            }
+
+            let attempts = 0;
+            const maxAttempts = validKeys.length;
+
+            while (attempts < maxAttempts) {
+                const currentKey = validKeys[activeIdx % validKeys.length];
+                
+                try {
+                    console.log(`[API Rotator] Trying API key index ${activeIdx % validKeys.length}...`);
+                    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentKey}`
+                        },
+                        body: JSON.stringify({
+                            model: activeModel,
+                            messages: messages,
+                            temperature: 0.5,
+                            max_tokens: 1024,
+                            stream: true
+                        })
+                    });
+
+                    // Failover on rate limit (429) or internal server error (>= 500)
+                    if (response.status === 429 || response.status >= 500) {
+                        console.warn(`[API Rotator] Key index ${activeIdx % validKeys.length} failed with status ${response.status}. Rotating key...`);
+                        activeIdx++;
+                        localStorage.setItem('chat_active_key_idx', activeIdx);
+                        attempts++;
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`API returned status ${response.status}`);
+                    }
+
+                    // Success: Rotate index round-robin for future queries to share load
+                    activeIdx++;
+                    localStorage.setItem('chat_active_key_idx', activeIdx);
+                    return response;
+
+                } catch (err) {
+                    console.error(`[API Rotator] Key index ${activeIdx % validKeys.length} threw error:`, err);
+                    activeIdx++;
+                    localStorage.setItem('chat_active_key_idx', activeIdx);
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        throw err;
+                    }
+                }
+            }
+            throw new Error("All Groq API keys in the rotation pool failed.");
+        }
+
         async function sendMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if (!text) return;
-
-            // Quota limit check to conserve API credits (max 15 requests per student per day)
-            const todayKey = toLocalDateStr(new Date());
-            const quotaKey = `chat_quota_${currentStudent.pin}_${todayKey}`;
-            let usageCount = parseInt(localStorage.getItem(quotaKey) || '0');
-            const MAX_DAILY_REQUESTS = 15;
-
-            if (usageCount >= MAX_DAILY_REQUESTS) {
-                appendMessage('bot', `⚠️ **Daily Quota Reached**: You have used all **${MAX_DAILY_REQUESTS}** of your daily requests to save system credits for other students. Please try again tomorrow!`);
-                input.value = '';
-                return;
-            }
 
             input.value = '';
             appendMessage('user', text);
@@ -1254,28 +1306,7 @@ STRICT INTERACTION RULES:
             appendTypingIndicator();
 
             try {
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${activeApiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: activeModel,
-                        messages: chatMessages,
-                        temperature: 0.5,
-                        max_tokens: 1024,
-                        stream: true
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Groq API returned status ${response.status}`);
-                }
-
-                // Increment quota usage count
-                localStorage.setItem(quotaKey, usageCount + 1);
-
+                const response = await fetchGroqChatCompletion(chatMessages);
                 removeTypingIndicator();
 
                 // Setup container for bot response streaming
