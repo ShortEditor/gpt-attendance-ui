@@ -64,6 +64,13 @@ The integration consists of three main components under the `public/student/` di
 *   **One-Sentence Rule**: For simple queries (e.g. *"Show my attendance"* or *"What class is next?"*), the AI responds in a **single brief sentence** without generic conversational fluff.
 *   **Complex Layouts**: The AI uses markdown formatting, bullet points, and tables only when reports or detailed lists are explicitly requested.
 
+### 4. Concurrency Guard & Input Lock
+*   **Preventing API Desync**: To prevent desync errors (like Groq's `400 Bad Request` "Role must alternate between user and assistant"), the chat UI implements a strict concurrency lock when a request is in progress.
+*   **Interactive Safeguards**: 
+    *   Toggling `isGenerating = true` immediately disables the text input field and the send button.
+    *   Suggestion chips are visually dimmed and click-blocked (`pointer-events: none`).
+    *   All controls are safely re-enabled in a `finally` block once the AI response finishes streaming.
+
 ---
 
 ## ⚙️ How to Add More Keys
