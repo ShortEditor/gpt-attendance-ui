@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT Dharmavaram - AI Student Assistant</title>
+    <link rel="manifest" href="chat-manifest.json">
+    <meta name="theme-color" content="#002045">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked JS for Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #002045;
+            --primary-light: #1960a3;
+            --accent: #764ba2;
+            --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-color: #f7f9fb;
+            --card-bg: #ffffff;
+            --text-main: #191c1e;
+            --text-muted: #43474e;
+            --border-color: #e2e8f0;
+            --success: #2e7d32;
+            --warning: #f57c00;
+            --danger: #c62828;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.03);
+            position: relative;
+        }
+
+        /* Common Hidden Class */
+        .hidden {
+            display: none !important;
+        }
+
+        /* ------------------ LOGIN SCREEN ------------------ */
+        .login-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .login-header {
+            margin-bottom: 32px;
+        }
+
+        .login-header .icon-container {
+            width: 80px;
+            height: 80px;
+            background: var(--accent-gradient);
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 10px 20px rgba(118, 75, 162, 0.2);
+            color: white;
+            font-size: 36px;
+        }
+
+        .login-header h1 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .login-card {
+            width: 100%;
+            background: #ffffff;
+            padding: 30px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .pin-input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(25, 96, 163, 0.15);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+            background: var(--accent-gradient);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.15);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(118, 75, 162, 0.25);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .login-error {
+            margin-top: 15px;
+            background: #ffebee;
+            color: var(--danger);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            display: none;
+            border-left: 4px solid var(--danger);
+        }
+
+        /* ------------------ MAIN APP SCREEN ------------------ */
+        .app-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .app-header {
+            background: var(--primary);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-avatar {
+            width: 42px;
+            height: 42px;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        .header-title h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+        }
+
+        .header-title p {
+            font-size: 12px;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Summary Widget */
+        .summary-widget {
+            background: #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .student-details {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .attendance-stat-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .attendance-badge {
+            background: var(--success);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .attendance-badge.low {
+            background: var(--danger);
+        }
+
+        .attendance-badge.warning {
+            background: var(--warning);
+        }
+
+        /* Conversation Area */
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: messageFadeIn 0.25s ease-out forwards;
+        }
+
+        @keyframes messageFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .msg-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .message.bot .msg-avatar {
+            background: var(--primary);
+            color: white;
+        }
+
+        .message.user .msg-avatar {
+            background: var(--accent-gradient);
+            color: white;
+        }
+
+        .msg-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .msg-bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            word-break: break-word;
+        }
+
+        .message.bot .msg-bubble {
+            background: white;
+            color: var(--text-main);
+            border-top-left-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .message.user .msg-bubble {
+            background: var(--primary-light);
+            color: white;
+            border-top-right-radius: 4px;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            align-self: flex-end;
+            margin: 0 4px;
+        }
+
+        .message.user .msg-time {
+            align-self: flex-start;
+        }
+
+        /* Suggestions Row */
+        .suggestions-container {
+            padding: 10px 14px;
+            border-top: 1px solid var(--border-color);
+            background: white;
+            overflow-x: auto;
+            white-space: nowrap;
+            display: flex;
+            gap: 8px;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+
+        .suggestions-container::-webkit-scrollbar {
+            display: none; /* Hide scrollbar Chrome/Safari */
+        }
+
+        .chip {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .chip:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        /* Input Controls */
+        .chat-input-area {
+            padding: 14px 20px 20px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-box-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #f8fafc;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-light);
+            background: white;
+        }
+
+        .send-btn {
+            background: var(--accent-gradient);
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(118, 75, 162, 0.2);
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 14px rgba(118, 75, 162, 0.3);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Typing Dots Animation */
+        .typing-dots {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 0;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: blink 1.4s infinite both;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: .2s; }
+        .typing-dots span:nth-child(3) { animation-delay: .4s; }
+
+        @keyframes blink {
+            0% { opacity: .2; }
+            20% { opacity: 1; }
+            100% { opacity: .2; }
+        }
+
+        /* ------------------ MODALS ------------------ */
+        .modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 32, 69, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 400px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            border: 1px solid var(--border-color);
+            animation: modalPop 0.25s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9) translateY(10px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .modal-card h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 18px;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-card p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+            line-height: 1.4;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .modal-input:focus {
+            border-color: var(--primary-light);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .modal-btn.cancel {
+            background: #f1f5f9;
+            color: var(--text-muted);
+        }
+
+        .modal-btn.confirm {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ------------------ TABLE & MARKDOWN STYLES ------------------ */
+        .msg-bubble table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .msg-bubble th, .msg-bubble td {
+            border: 1px solid #cbd5e1;
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        .msg-bubble th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+        }
+
+        .msg-bubble ul, .msg-bubble ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .msg-bubble li {
+            margin-bottom: 4px;
+        }
+
+        .msg-bubble p {
+            margin-bottom: 8px;
+        }
+
+        .msg-bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        .msg-bubble strong {
+            font-weight: 700;
+        }
+
+        .loading-cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            z-index: 50;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-light);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Loader Cover for App initialization -->
+        <div id="loadingCover" class="loading-cover">
+            <div class="spinner"></div>
+            <div style="font-weight:600; color:var(--primary); font-size:14px;">Loading Live Academic Data...</div>
+        </div>
+
+        <!-- LOGIN SCREEN -->
+        <div id="loginScreen" class="login-screen hidden">
+            <div class="login-header">
+                <div class="icon-container">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <h1>Student AI Assistant</h1>
+                <p>Chat with your personal assistant</p>
+            </div>
+
+            <div class="login-card">
+                <div class="input-group">
+                    <label class="input-label" for="pinInput">Enter Student PIN</label>
+                    <input type="text" id="pinInput" class="pin-input" placeholder="e.g. 21170-CM-001" autocomplete="off">
+                </div>
+                <button class="btn" onclick="login()">Access Assistant</button>
+                <div id="loginError" class="login-error"></div>
+                <div style="margin-top: 18px; text-align: center;">
+                    <a href="index.html" style="font-size: 13px; font-weight: 600; color: var(--primary-light); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-house"></i> Back to Student Portal
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CHAT APP SCREEN -->
+        <div id="mainApp" class="app-screen hidden">
+            <!-- App Header -->
+            <div class="app-header">
+                <div class="header-left">
+                    <div class="header-avatar">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="header-title">
+                        <h2>GPT Assistant</h2>
+                        <p>Academic Personal Guide</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" onclick="window.location.href='index.html'" title="Home"><i class="fa-solid fa-house"></i></button>
+                    <button class="icon-btn" onclick="openSettingsModal()" title="Settings"><i class="fa-solid fa-gear"></i></button>
+                    <button class="icon-btn" onclick="logout()" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+
+            <!-- Summary Bar -->
+            <div class="summary-widget">
+                <div class="student-details" id="studentDetailText">Student Name</div>
+                <div class="attendance-stat-box">
+                    <span id="overallAttendanceBadge" class="attendance-badge">--%</span>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-body" id="chatBody">
+                <!-- Messages populated dynamically -->
+            </div>
+
+            <!-- Suggestion Chips -->
+            <div class="suggestions-container" id="suggestionsContainer">
+                <div class="chip" onclick="quickAsk('What is my overall attendance status?')">
+                    <i class="fa-solid fa-chart-simple"></i> Attendance Summary
+                </div>
+                <div class="chip" onclick="quickAsk('Show my timetable schedule for today')">
+                    <i class="fa-solid fa-calendar-day"></i> Today's Timetable
+                </div>
+                <div class="chip" onclick="quickAsk('Give me a detailed report of my Unit Test marks')">
+                    <i class="fa-solid fa-list-check"></i> Unit Marks
+                </div>
+                <div class="chip" onclick="quickAsk('Are there any active assignments or notices for me?')">
+                    <i class="fa-solid fa-bell"></i> Assignments & Notices
+                </div>
+            </div>
+
+            <!-- Input Box area -->
+            <div class="chat-input-area">
+                <div class="input-box-wrapper">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Ask about attendance, timetable, marks..." autocomplete="off">
+                </div>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-card">
+                <h3><i class="fa-solid fa-gear"></i> Assistant Settings</h3>
+                <p>Verify or configure your Groq API Credentials and LLM settings.</p>
+                <div style="text-align: left; margin-bottom: 12px;">
+                    <label class="input-label">Groq API Key</label>
+                    <input type="password" id="apiKeyInput" class="modal-input" placeholder="gsk_...">
+                </div>
+                <div style="text-align: left; margin-bottom: 15px;">
+                    <label class="input-label">Assistant Model</label>
+                    <select id="modelSelect" class="modal-input" style="background: white;">
+                        <option value="llama-3.3-70b-versatile">Llama 3.3 70B (High Quality)</option>
+                        <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fastest)</option>
+                        <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel" onclick="closeSettingsModal()">Cancel</button>
+                    <button class="modal-btn confirm" onclick="saveSettings()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Helper: Format local date
+        function toLocalDateStr(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        // Firebase configuration (Retrieved from index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9nMFnZGdnOm5zXgpSMKiTFpzEBTuPfRM",
+            authDomain: "gpt-dharmavaram-attendance.firebaseapp.com",
+            projectId: "gpt-dharmavaram-attendance",
+            storageBucket: "gpt-dharmavaram-attendance.firebasestorage.app",
+            messagingSenderId: "471911252737",
+            appId: "1:471911252737:web:a88dcdfafbe0307e7a1100"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Groq API preconfiguration
+        const PRECONFIGURED_API_KEY = "";
+        let activeApiKey = localStorage.getItem('chat_groq_api_key') || PRECONFIGURED_API_KEY;
+        let activeModel = localStorage.getItem('chat_groq_model') || 'llama-3.3-70b-versatile';
+
+        // App variables
+        let currentStudent = null;
+        let allAttendance = {};
+        let allUnitMarks = {};
+        let academicSubjects = {};
+        let timetableData = {};
+        let holidayList = [];
+        let allNotifications = [];
+        let allAssignments = [];
+        let MIN_PERIODS_FOR_PRESENT = 3;
+
+        // RAG Context
+        let assembledRAGContext = "";
+        let chatMessages = []; // System prompt + chat history
+
+        window.addEventListener('load', async () => {
+
+            document.getElementById('apiKeyInput').value = activeApiKey;
+            document.getElementById('modelSelect').value = activeModel;
+
+            const saved = localStorage.getItem('studentSession');
+            if (saved) {
+                try {
+                    currentStudent = JSON.parse(saved);
+                    await initializeAppData();
+                } catch (e) {
+                    console.error('Session restoration failed:', e);
+                    localStorage.removeItem('studentSession');
+                    showLoginScreen();
+                }
+            } else {
+                showLoginScreen();
+            }
+        });
+
+        function showLoginScreen() {
+            document.getElementById('loadingCover').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        async function login() {
+            const pin = document.getElementById('pinInput').value.trim();
+            const errorDiv = document.getElementById('loginError');
+            if (!pin) {
+                errorDiv.textContent = '⚠️ Please enter your PIN';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            errorDiv.style.display = 'none';
+            document.getElementById('loadingCover').classList.remove('hidden');
+
+            try {
+                const pinUpper = pin.toUpperCase();
+                const yearSems = [
+                    { year: '1', sem: '1', key: '1-1' },
+                    { year: '2', sem: '3', key: '2-3' },
+                    { year: '2', sem: '4', key: '2-4' },
+                    { year: '3', sem: '5', key: '3-5' }
+                ];
+                let found = false;
+                const yearDocCache = {};
+
+                for (const { year, sem, key } of yearSems) {
+                    if (!yearDocCache[year]) {
+                        yearDocCache[year] = await db.collection('students').doc(year).get();
+                    }
+                    const snapshot = yearDocCache[year];
+                    if (snapshot.exists) {
+                        const data = snapshot.data();
+                        const students = data[sem] || [];
+                        const student = students.find(s => s.pin && s.pin.toString().toUpperCase() === pinUpper);
+                        if (student) {
+                            currentStudent = { ...student, yearSem: key };
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (found) {
+                    localStorage.setItem('studentSession', JSON.stringify(currentStudent));
+                    await initializeAppData();
+                } else {
+                    document.getElementById('loadingCover').classList.add('hidden');
+                    errorDiv.innerHTML = '❌ Invalid PIN<br><small style="font-size:12px;">Please check your PIN and try again</small>';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loadingCover').classList.add('hidden');
+                errorDiv.textContent = `❌ Database error: ${error.message || 'Connection failed'}`;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('studentSession');
+            currentStudent = null;
+            chatMessages = [];
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('pinInput').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        async function initializeAppData() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('loadingCover').classList.remove('hidden');
+
+            try {
+                // Fetch all data in parallel
+                const [attSnap, marksSnap, subjectsDoc, timetableDoc, holidaysDoc, notifSnap, assignSnap, minPeriodsDoc] = await Promise.all([
+                    db.collection('attendance').get(),
+                    db.collection('unitMarks').get(),
+                    db.collection('settings').doc('subjects').get(),
+                    db.collection('settings').doc('timetable').get(),
+                    db.collection('settings').doc('holidays').get(),
+                    db.collection('notifications').get(),
+                    db.collection('assignments').get(),
+                    db.collection('settings').doc('minPeriodsForPresent').get()
+                ]);
+
+                // Store inside locals
+                allAttendance = {};
+                attSnap.forEach(doc => { allAttendance[doc.id] = doc.data(); });
+
+                allUnitMarks = {};
+                marksSnap.forEach(doc => { allUnitMarks[doc.id] = doc.data(); });
+
+                academicSubjects = subjectsDoc.exists ? subjectsDoc.data() : {};
+                timetableData = timetableDoc.exists ? timetableDoc.data() : {};
+                holidayList = holidaysDoc.exists ? (holidaysDoc.data().list || []) : [];
+                MIN_PERIODS_FOR_PRESENT = minPeriodsDoc.exists ? (minPeriodsDoc.data().value || 3) : 3;
+
+                // Notifications
+                const todayStr = toLocalDateStr(new Date());
+                const [y, s] = currentStudent.yearSem.split('-').map(Number);
+                allNotifications = [];
+                notifSnap.forEach(doc => {
+                    const n = { id: doc.id, ...doc.data() };
+                    if (!n.validFrom || !n.validTo) return;
+                    if (todayStr < n.validFrom || todayStr > n.validTo) return;
+                    const ty = n.target?.year;
+                    const ts = n.target?.semester;
+                    if (ty !== 'all' && parseInt(ty) !== y) return;
+                    if (ts !== 'all' && parseInt(ts) !== s) return;
+                    allNotifications.push(n);
+                });
+
+                // Assignments
+                allAssignments = [];
+                assignSnap.forEach(doc => {
+                    const d = doc.data();
+                    if (String(d.target?.year) !== String(y) || String(d.target?.semester) !== String(s)) return;
+                    // Keep active or recently expired (within 7 days)
+                    const dueDate = new Date(d.dueDate);
+                    const diffDays = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
+                    if (diffDays < -7) return;
+                    allAssignments.push({ id: doc.id, ...d });
+                });
+
+                // Build context
+                buildStudentRAGContext();
+
+                // Welcome message
+                displayWelcomeMessage();
+
+            } catch (err) {
+                console.error('Data initialization failed:', err);
+                const cover = document.getElementById('loadingCover');
+                if (cover) {
+                    cover.innerHTML = `
+                        <div style="color:var(--danger); font-weight:700; font-size:16px; margin-bottom:10px;">⚠️ Sync Failed</div>
+                        <div style="font-size:13px; color:var(--text-muted); max-width:80%; margin:0 auto 15px; word-break:break-all; line-height:1.4;">
+                            <strong>Details:</strong><br>${err.message || err}
+                        </div>
+                        <button class="btn" onclick="window.location.reload()" style="max-width:180px; padding:10px;">Retry Connection</button>
+                    `;
+                    cover.classList.remove('hidden');
+                } else {
+                    alert('⚠️ Sync Error: ' + err.message);
+                }
+            } finally {
+                document.getElementById('loadingCover').classList.add('hidden');
+            }
+        }
+
+        function calculateAttendanceStats() {
+            const [y, s] = currentStudent.yearSem.split('-');
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const academicStartYear = today.getMonth() >= 6 ? currentYear : currentYear - 1;
+            const startDate = new Date(academicStartYear, 6, 1); // July 1st
+
+            let totalWorkingDays = 0;
+            let totalPresentDays = 0;
+            const history = [];
+
+            for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+                const dateStr = toLocalDateStr(d);
+                const attData = allAttendance[dateStr] || {};
+
+                if (attData[currentStudent.pin]) {
+                    totalWorkingDays++;
+                    const periods = attData[currentStudent.pin];
+                    let presentCount = 0;
+                    const dayPeriods = [];
+
+                    for (let p = 1; p <= 7; p++) {
+                        const status = periods[p] ? periods[p].status : '—';
+                        if (status === 'P') presentCount++;
+                        dayPeriods.push(`P${p}: ${status}`);
+                    }
+
+                    const isPresent = presentCount >= MIN_PERIODS_FOR_PRESENT;
+                    if (isPresent) totalPresentDays++;
+
+                    history.push({
+                        date: dateStr,
+                        periods: dayPeriods.join(', '),
+                        status: isPresent ? 'Present' : 'Absent',
+                        presentPeriods: presentCount
+                    });
+                }
+            }
+
+            const percentage = totalWorkingDays > 0 ? Math.round((totalPresentDays / totalWorkingDays) * 100) : 0;
+            return { percentage, present: totalPresentDays, total: totalWorkingDays, history };
+        }
+
+        function buildStudentRAGContext() {
+            const stats = calculateAttendanceStats();
+
+            // Update UI widgets
+            document.getElementById('studentDetailText').textContent = `${currentStudent.name} (${currentStudent.pin}) — Class ${currentStudent.yearSem}`;
+            const badge = document.getElementById('overallAttendanceBadge');
+            badge.textContent = `${stats.percentage}% Attendance`;
+            badge.className = 'attendance-badge';
+            if (stats.percentage < 75) {
+                badge.classList.add('low');
+            } else if (stats.percentage < 85) {
+                badge.classList.add('warning');
+            }
+
+            // Assemble subjects context
+            const [y, s] = currentStudent.yearSem.split('-');
+            const subjectsList = [];
+            Object.keys(academicSubjects).forEach(code => {
+                const sub = academicSubjects[code];
+                if (sub && typeof sub === 'object') {
+                    const belongs = (y === '1' && code.startsWith('CM-1')) ||
+                                    (s === '3' && code.startsWith('CM-3')) ||
+                                    (s === '4' && code.startsWith('CM-4')) ||
+                                    (s === '5' && code.startsWith('CM-5'));
+                    if (belongs) {
+                        subjectsList.push(`${code}: ${sub.name} (${sub.type})`);
+                    }
+                }
+            });
+
+            // Assemble marks context
+            const unitList = y === '1' ? ['I', 'II', 'III'] : ['I', 'II'];
+            const marksSummary = [];
+            Object.keys(academicSubjects).forEach(code => {
+                const sub = academicSubjects[code];
+                if (sub && sub.type === 'Theory') {
+                    const belongs = (y === '1' && code.startsWith('CM-1')) ||
+                                    (s === '3' && code.startsWith('CM-3')) ||
+                                    (s === '4' && code.startsWith('CM-4')) ||
+                                    (s === '5' && code.startsWith('CM-5'));
+                    if (belongs) {
+                        const marksObj = {};
+                        unitList.forEach(unit => {
+                            const key = `${currentStudent.yearSem}_${code}_UNIT-${unit}`;
+                            const val = allUnitMarks[key]?.marks?.[currentStudent.pin];
+                            marksObj[unit] = (val !== undefined) ? `${val}/40` : 'Not Posted';
+                        });
+                        const marksStr = unitList.map(u => `Unit ${u}: ${marksObj[u]}`).join(', ');
+                        marksSummary.push(`- ${sub.name} (${code}): ${marksStr}`);
+                    }
+                }
+            });
+
+            // Assemble timetable context
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const ttSummary = [];
+            days.forEach(d => {
+                const key = `${y}-${s}-${d}`;
+                const schedule = timetableData[key] || [];
+                if (schedule.length > 0) {
+                    const schedStr = schedule.map(e => `Periods ${e.periods}: ${e.subject} (${e.code})`).join(', ');
+                    ttSummary.push(`- ${d}: ${schedStr}`);
+                } else {
+                    ttSummary.push(`- ${d}: No timetable entries`);
+                }
+            });
+
+            // Assemble notices context
+            const notifsSummary = allNotifications.map(n => `- [${n.type.toUpperCase()}] ${n.title}: ${n.content || ''} (Expiry: ${n.validTo})`);
+            // Assemble assignments context
+            const assignSummary = allAssignments.map(a => `- ${a.title} for ${a.subjectName} (Due: ${a.dueDate}, Urgent: ${a.urgency || 'Normal'})`);
+
+            // Assemble recent attendance history (last 15 days of records)
+            const recentHistory = stats.history.slice(-15).reverse().map(h => `- Date: ${h.date}, Status: ${h.status} (${h.periods})`);
+
+            // Final text context build
+            const todayStr = toLocalDateStr(new Date());
+            assembledRAGContext = `
+STUDENT PROFILE:
+- Name: ${currentStudent.name}
+- PIN: ${currentStudent.pin}
+- Class Group: Year ${y}, Semester ${s}
+- Overall Attendance: ${stats.percentage}% (${stats.present} Present days out of ${stats.total} Total active college working days). (Required: 75% minimum).
+
+ACADEMIC COURSES/SUBJECTS:
+${subjectsList.join('\n') || 'No subjects mapped'}
+
+TIMETABLE SCHEDULE:
+${ttSummary.join('\n')}
+
+UNIT TEST MARKS (Out of 40):
+${marksSummary.join('\n') || 'No marks available'}
+
+RECENT ATTENDANCE LOG (Last 15 days where attendance was marked):
+${recentHistory.join('\n') || 'No recent attendance posts'}
+
+ACTIVE ASSIGNMENTS & STUDY MATERIALS:
+${assignSummary.join('\n') || 'No active assignments'}
+
+NOTIFICATIONS & GENERAL COLLEGE NOTICES:
+${notifsSummary.join('\n') || 'No active notifications'}
+
+ACADEMIC HOLIDAYS:
+${holidayList.map(h => `- Date: ${h.date}, Reason: ${h.reason}`).join('\n') || 'No holidays configured'}
+`;
+
+            // Setup system prompt inside messages array
+            chatMessages = [
+                {
+                    role: "system",
+                    content: `You are "GPT Assistant", an advanced, friendly academic personal assistant for a student of Govt Polytechnic, Dharmavaram. 
+You have access to the student's live college records, including daily attendance records, timetable schedules, unit marks, notifications, assignments, and academic details.
+
+Here is the student's live data context:
+${assembledRAGContext}
+
+Instructions for replies:
+1. Always base your replies strictly on the provided student data. Never guess or hallucinate statistics, names, marks, or dates.
+2. If the user asks about attendance, provide details about their percentage, present days, total class days, and if they are above/below the 75% attendance threshold. Be supportive and offer advice if it's low.
+3. Use HTML/Markdown formatting like bullet lists, bold highlights, or tables where appropriate to present schedules or marks cleanly.
+4. Keep a warm, encouraging, conversational tone, addressing the student by name.
+5. If the student asks something outside your capability, answer politely that you only have access to their current academic portal stats and data. Current date today is ${todayStr}.`
+                }
+            ];
+        }
+
+        function displayWelcomeMessage() {
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = ''; // Clear previous chats
+
+            const stats = calculateAttendanceStats();
+            let welcomeText = `Hello **${currentStudent.name}**! 👋 I am your GPT Student Assistant. I have loaded your live dashboard. \n\n`;
+
+            if (stats.percentage < 75) {
+                welcomeText += `⚠️ **Attendance Alert**: Your overall attendance is currently **${stats.percentage}%** (${stats.present}/${stats.total} days), which is **below the 75% required threshold**. I recommend attending all upcoming classes to avoid eligibility issues.`;
+            } else {
+                welcomeText += `✨ **Great Job!**: Your overall attendance is **${stats.percentage}%** (${stats.present}/${stats.total} days), which meets the college guidelines. Keep it up!`;
+            }
+
+            if (allAssignments.length > 0) {
+                welcomeText += `\n\nYou have **${allAssignments.length}** pending assignments. Let me know if you want to check them!`;
+            }
+
+            if (!activeApiKey) {
+                welcomeText += `\n\n⚠️ **API Key Config Required**: Please click the **Gear icon (⚙️)** in the top-right header to enter your Groq API Key to start chatting with the AI.`;
+            }
+
+            appendMessage("bot", welcomeText);
+        }
+
+        function appendMessage(role, text) {
+            const chatBody = document.getElementById('chatBody');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+
+            const avatar = role === 'bot' ? '<i class="fa-solid fa-robot"></i>' : '<i class="fa-solid fa-graduation-cap"></i>';
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            msgDiv.innerHTML = `
+                <div class="msg-avatar">${avatar}</div>
+                <div class="msg-content-wrapper">
+                    <div class="msg-bubble">${marked.parse(text)}</div>
+                    <span class="msg-time">${timeStr}</span>
+                </div>
+            `;
+            chatBody.appendChild(msgDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function appendTypingIndicator() {
+            const chatBody = document.getElementById('chatBody');
+            const indicator = document.createElement('div');
+            indicator.className = 'message bot';
+            indicator.id = 'typingIndicator';
+            indicator.innerHTML = `
+                <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="msg-content-wrapper">
+                    <div class="msg-bubble">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatBody.appendChild(indicator);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            appendMessage('user', text);
+            chatMessages.push({ role: 'user', content: text });
+
+            appendTypingIndicator();
+
+            try {
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${activeApiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: activeModel,
+                        messages: chatMessages,
+                        temperature: 0.5,
+                        max_tokens: 1024,
+                        stream: true
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Groq API returned status ${response.status}`);
+                }
+
+                removeTypingIndicator();
+
+                // Setup container for bot response streaming
+                const chatBody = document.getElementById('chatBody');
+                const botMsgDiv = document.createElement('div');
+                botMsgDiv.className = 'message bot';
+                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                botMsgDiv.innerHTML = `
+                    <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="msg-content-wrapper">
+                        <div class="msg-bubble" id="streamingBubble"></div>
+                        <span class="msg-time">${timeStr}</span>
+                    </div>
+                `;
+                chatBody.appendChild(botMsgDiv);
+                const bubble = document.getElementById('streamingBubble');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let buffer = '';
+                let accumulatedReply = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        const cleaned = line.trim();
+                        if (cleaned.startsWith('data: ')) {
+                            const dataStr = cleaned.slice(6);
+                            if (dataStr === '[DONE]') break;
+                            try {
+                                const parsed = JSON.parse(dataStr);
+                                const token = parsed.choices[0].delta.content || '';
+                                accumulatedReply += token;
+                                bubble.innerHTML = marked.parse(accumulatedReply);
+                                chatBody.scrollTop = chatBody.scrollHeight;
+                            } catch (e) {}
+                        }
+                    }
+                }
+
+                // Finalize streaming
+                bubble.removeAttribute('id');
+                chatMessages.push({ role: 'assistant', content: accumulatedReply });
+
+            } catch (err) {
+                console.error(err);
+                removeTypingIndicator();
+                appendMessage('bot', `⚠️ **Error**: Failed to communicate with AI Assistant.\n*Reason: ${err.message || 'Check connection/API Key'}*`);
+            }
+        }
+
+        function quickAsk(question) {
+            document.getElementById('chatInput').value = question;
+            sendMessage();
+        }
+
+        // Support Enter key press
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Settings Modal functions
+        function openSettingsModal() {
+            document.getElementById('apiKeyInput').value = activeApiKey;
+            document.getElementById('modelSelect').value = activeModel;
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function saveSettings() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            const model = document.getElementById('modelSelect').value;
+
+            if (key) {
+                activeApiKey = key;
+                localStorage.setItem('chat_groq_api_key', key);
+            }
+            activeModel = model;
+            localStorage.setItem('chat_groq_model', model);
+
+            // Rebuild context
+            buildStudentRAGContext();
+
+            closeSettingsModal();
+            appendMessage('bot', `✅ Settings saved successfully. Assistant model switched to **${model}**.`);
+        }
+    </script>
+</body>
+
+</html>

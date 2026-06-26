@@ -1,0 +1,24 @@
+{
+  "name": "GPT Dharmavaram - Student AI Assistant",
+  "short_name": "GPT Assistant",
+  "description": "Student AI Personal Assistant chatbot for GPT Dharmavaram",
+  "start_url": "/student/chat.html",
+  "display": "standalone",
+  "background_color": "#002045",
+  "theme_color": "#002045",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/student/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/student/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
