@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Manager – GPT Dharmavaram Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f8;
+            color: #191c1e;
+            min-height: 100vh;
+            padding: 24px 16px 60px;
+        }
+
+        .container { max-width: 780px; margin: 0 auto; }
+
+        .page-header {
+            background: #002045;
+            color: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .page-header h1 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .page-header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+
+        .card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid #e0e3e5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .card-title {
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            color: #002045;
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label { font-size: 12px; font-weight: 600; color: #43474e; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+        select, input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #c4c6cf;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: #002045;
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: #1960a3;
+            box-shadow: 0 0 0 3px rgba(25,96,163,0.12);
+        }
+
+        .days-nav {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .day-btn {
+            padding: 8px 14px;
+            border: 2px solid #e0e3e5;
+            border-radius: 8px;
+            background: #fff;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            color: #43474e;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .day-btn.active {
+            background: #002045;
+            border-color: #002045;
+            color: #fff;
+        }
+
+        .day-btn:hover:not(.active) {
+            border-color: #1960a3;
+            color: #1960a3;
+        }
+
+        .period-row {
+            display: grid;
+            grid-template-columns: 36px 1fr 1fr 90px;
+            gap: 8px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f2f4f6;
+        }
+
+        .period-row:last-child { border-bottom: none; }
+
+        .period-num {
+            width: 32px;
+            height: 32px;
+            background: #002045;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            flex-shrink: 0;
+        }
+
+        .period-time {
+            font-size: 10px;
+            color: #43474e;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+        }
+
+        .type-select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #c4c6cf;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 13px 24px;
+            background: #002045;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover { background: #1960a3; transform: translateY(-1px); }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-success {
+            background: #2e7d32;
+        }
+        .btn-success:hover { background: #1b5e20; }
+
+        .btn-secondary {
+            background: #f2f4f6;
+            color: #002045;
+            border: 1px solid #c4c6cf;
+        }
+        .btn-secondary:hover { background: #e0e3e5; transform: translateY(-1px); }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #002045;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 13px;
+            transition: transform 0.3s ease;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { background: #2e7d32; }
+        .toast.error { background: #ba1a1a; }
+
+        .sem-badge {
+            display: inline-block;
+            background: #d3e4ff;
+            color: #001c38;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .period-row input { padding: 8px 10px; font-size: 12px; }
+
+        .existing-notice {
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #1b5e20;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .period-row { grid-template-columns: 32px 1fr; grid-template-rows: auto auto; }
+            .period-time { display: none; }
+            .type-select { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1>🕐 Timetable Manager</h1>
+            <p>GPT Dharmavaram – Admin Panel</p>
+        </div>
+        <a href="javascript:history.back()" style="color:white;font-size:12px;opacity:0.8;text-decoration:none;">← Back</a>
+    </div>
+
+    <!-- Step 1: Select Semester -->
+    <div class="card">
+        <div class="card-title">📋 Step 1 — Select Class / Semester</div>
+        <label>Year & Semester</label>
+        <select id="semSelect" onchange="onSemChange()">
+            <option value="">-- Select --</option>
+            <option value="1-1">1st Year – Sem 1</option>
+            <option value="2-3">2nd Year – Sem 3</option>
+            <option value="2-4">2nd Year – Sem 4</option>
+            <option value="3-5">3rd Year – Sem 5</option>
+        </select>
+    </div>
+
+    <!-- Step 2: Enter Timetable -->
+    <div class="card" id="ttCard" style="display:none;">
+        <div class="card-title">
+            📅 Step 2 — Enter Periods
+            <span class="sem-badge" id="semBadgeLabel"></span>
+        </div>
+
+        <div id="existingNotice" class="existing-notice">
+            ✅ Timetable already exists for this semester. You can edit and overwrite it.
+        </div>
+
+        <!-- Day selector -->
+        <div class="days-nav" id="daysNav">
+            <button class="day-btn active" onclick="switchDay('Monday')">Mon</button>
+            <button class="day-btn" onclick="switchDay('Tuesday')">Tue</button>
+            <button class="day-btn" onclick="switchDay('Wednesday')">Wed</button>
+            <button class="day-btn" onclick="switchDay('Thursday')">Thu</button>
+            <button class="day-btn" onclick="switchDay('Friday')">Fri</button>
+            <button class="day-btn" onclick="switchDay('Saturday')">Sat</button>
+        </div>
+
+        <!-- Period grid (7 periods) -->
+        <div class="period-row" style="background:#f7f9fb;border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+            <div style="font-size:10px;font-weight:700;color:#43474e;text-align:center;">#</div>
+            <div style="font-size:10px;font-weight:700;color:#43474e;text-transform:uppercase;">Subject Name</div>
+            <div style="font-size:10px;font-weight:700;color:#43474e;text-transform:uppercase;">Subject Code</div>
+            <div style="font-size:10px;font-weight:700;color:#43474e;text-transform:uppercase;">Type</div>
+        </div>
+
+        <div id="periodsContainer"></div>
+
+        <div class="action-row">
+            <button class="btn btn-secondary" onclick="clearDay()">🗑️ Clear Day</button>
+            <button class="btn btn-success" id="saveBtn" onclick="saveTimetable()">💾 Save Timetable</button>
+        </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="card" id="previewCard" style="display:none;">
+        <div class="card-title">👁️ Current Week Preview</div>
+        <div id="previewContent"></div>
+    </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC9nMFnZGdnOm5zXgpSMKiTFpzEBTuPfRM",
+        authDomain: "gpt-dharmavaram-attendance.firebaseapp.com",
+        projectId: "gpt-dharmavaram-attendance",
+        storageBucket: "gpt-dharmavaram-attendance.firebasestorage.app",
+        messagingSenderId: "471911252737",
+        appId: "1:471911252737:web:a88dcdfafbe0307e7a1100"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const PERIOD_TIMES = [
+        '9:00 – 9:50',
+        '9:50 – 10:40',
+        '10:50 – 11:40',
+        '11:40 – 12:30',
+        '1:15 – 2:05',
+        '2:05 – 2:55',
+        '2:55 – 3:45'
+    ];
+
+    // In-memory timetable: { Monday: [{subjectName, subjectCode, type}, ...x7], ... }
+    let ttData = {};
+    let currentDay = 'Monday';
+    let currentSem = '';
+
+    // ── Semester change ──────────────────────────────────────────────────
+    async function onSemChange() {
+        currentSem = document.getElementById('semSelect').value;
+        if (!currentSem) {
+            document.getElementById('ttCard').style.display = 'none';
+            document.getElementById('previewCard').style.display = 'none';
+            return;
+        }
+
+        const labels = {
+            '1-1': 'Sem 1 (1st Year)',
+            '2-3': 'Sem 3 (2nd Year)',
+            '2-4': 'Sem 4 (2nd Year)',
+            '3-5': 'Sem 5 (3rd Year)'
+        };
+        document.getElementById('semBadgeLabel').textContent = labels[currentSem] || currentSem;
+
+        // Load existing data from Firestore
+        ttData = {};
+        try {
+            const doc = await db.collection('settings').doc('timetable').get();
+            if (doc.exists && doc.data()[currentSem]) {
+                const raw = doc.data()[currentSem];
+                DAYS.forEach(d => { ttData[d] = raw[d] || emptyDay(); });
+                document.getElementById('existingNotice').style.display = 'block';
+                showPreview();
+            } else {
+                DAYS.forEach(d => { ttData[d] = emptyDay(); });
+                document.getElementById('existingNotice').style.display = 'none';
+                document.getElementById('previewCard').style.display = 'none';
+            }
+        } catch(e) {
+            DAYS.forEach(d => { ttData[d] = emptyDay(); });
+        }
+
+        currentDay = 'Monday';
+        activateDayBtn('Monday');
+        renderPeriods();
+        document.getElementById('ttCard').style.display = 'block';
+    }
+
+    function emptyDay() {
+        return Array(7).fill(null).map(() => ({ subjectName: '', subjectCode: '', type: 'Theory' }));
+    }
+
+    // ── Day switching ────────────────────────────────────────────────────
+    function switchDay(day) {
+        saveCurrentDayToMemory();
+        currentDay = day;
+        activateDayBtn(day);
+        renderPeriods();
+    }
+
+    function activateDayBtn(day) {
+        document.querySelectorAll('.day-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', DAYS[i] === day);
+        });
+    }
+
+    // ── Render 7 period rows ─────────────────────────────────────────────
+    function renderPeriods() {
+        const container = document.getElementById('periodsContainer');
+        const dayPeriods = ttData[currentDay] || emptyDay();
+        let html = '';
+        for (let i = 0; i < 7; i++) {
+            const p = dayPeriods[i] || { subjectName: '', subjectCode: '', type: 'Theory' };
+            html += `
+            <div class="period-row">
+                <div class="period-num">${i + 1}</div>
+                <input type="text" id="sname_${i}" placeholder="Subject Name" value="${esc(p.subjectName)}">
+                <input type="text" id="scode_${i}" placeholder="Code e.g. CM-301" value="${esc(p.subjectCode)}" style="font-family:'JetBrains Mono',monospace;font-size:12px;">
+                <select class="type-select" id="stype_${i}">
+                    <option value="Theory"${p.type==='Theory'?' selected':''}>Theory</option>
+                    <option value="Lab"${p.type==='Lab'?' selected':''}>Lab</option>
+                    <option value="Free"${p.type==='Free'?' selected':''}>Free</option>
+                </select>
+            </div>
+            <div style="font-size:10px;color:#aaa;padding:0 0 6px 46px;font-family:'JetBrains Mono',monospace;">${PERIOD_TIMES[i]}</div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    // ── Read form → memory ───────────────────────────────────────────────
+    function saveCurrentDayToMemory() {
+        if (!currentDay) return;
+        const periods = [];
+        for (let i = 0; i < 7; i++) {
+            const nameEl = document.getElementById(`sname_${i}`);
+            const codeEl = document.getElementById(`scode_${i}`);
+            const typeEl = document.getElementById(`stype_${i}`);
+            if (!nameEl) break;
+            periods.push({
+                subjectName: nameEl.value.trim(),
+                subjectCode: codeEl.value.trim().toUpperCase(),
+                type: typeEl.value
+            });
+        }
+        ttData[currentDay] = periods;
+    }
+
+    function clearDay() {
+        ttData[currentDay] = emptyDay();
+        renderPeriods();
+        showToast('🗑️ Day cleared');
+    }
+
+    // ── Save to Firestore ────────────────────────────────────────────────
+    async function saveTimetable() {
+        saveCurrentDayToMemory();
+
+        if (!currentSem) { showToast('⚠️ Select a semester first', 'error'); return; }
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Saving...';
+
+        try {
+            // Merge into settings/timetable under the semester key
+            await db.collection('settings').doc('timetable').set(
+                { [currentSem]: ttData },
+                { merge: true }
+            );
+            showToast('✅ Timetable saved!', 'success');
+            document.getElementById('existingNotice').style.display = 'block';
+            showPreview();
+        } catch(e) {
+            console.error(e);
+            showToast('❌ Save failed: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '💾 Save Timetable';
+        }
+    }
+
+    // ── Preview ──────────────────────────────────────────────────────────
+    function showPreview() {
+        saveCurrentDayToMemory();
+        const card = document.getElementById('previewCard');
+        const content = document.getElementById('previewContent');
+        const colors = ['#e8f5e9','#e3f2fd','#fff3e0','#fce4ec','#f3e5f5','#e0f7fa','#fffde7','#fbe9e7'];
+        const codeMap = {};
+        let cIdx = 0;
+        function getColor(code) {
+            if (!code) return '#f2f4f6';
+            if (!codeMap[code]) codeMap[code] = colors[cIdx++ % colors.length];
+            return codeMap[code];
+        }
+
+        let html = '';
+        DAYS.forEach(day => {
+            const periods = ttData[day] || [];
+            const filled = periods.filter(p => p.subjectCode).length;
+            html += `<div style="margin-bottom:12px;">
+                <div style="font-family:'Manrope',sans-serif;font-weight:800;font-size:12px;color:#002045;margin-bottom:6px;text-transform:uppercase;">${day} <span style="font-weight:500;color:#43474e;">(${filled}/7 filled)</span></div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">`;
+            for (let i = 0; i < 7; i++) {
+                const p = periods[i] || {};
+                const bg = p.subjectCode ? getColor(p.subjectCode) : '#f2f4f6';
+                const label = p.subjectCode || '–';
+                html += `<div style="background:${bg};border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;color:#002045;font-family:'JetBrains Mono',monospace;" title="${p.subjectName||''}">${label}${p.type==='Lab'?' <small>LAB</small>':''}</div>`;
+            }
+            html += `</div></div>`;
+        });
+
+        content.innerHTML = html;
+        card.style.display = 'block';
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    function esc(str) {
+        return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    function showToast(msg, type = '') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast' + (type ? ' ' + type : '');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+</script>
+</body>
+</html>

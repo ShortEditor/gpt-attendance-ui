@@ -861,6 +861,177 @@
             color: #ffffff !important;
         }
 
+        /* ── Timetable Tab Styles ──────────────────────────────────────── */
+        .tt-day-label {
+            font-family: 'Manrope', sans-serif;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #002045;
+            background: #e8f0fe;
+            border: 1px solid #c5d5f5;
+        }
+
+        .tt-day-label.today-day {
+            background: #002045;
+            color: #ffffff;
+            border-color: #002045;
+        }
+
+        .tt-day-section {
+            margin-bottom: 14px;
+            border-radius: 12px;
+            border: 1px solid #e0e3e5;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+
+        .tt-day-section.today-section {
+            border-color: #002045;
+            box-shadow: 0 4px 16px rgba(0, 32, 69, 0.12);
+        }
+
+        .tt-day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #f7f9fb;
+            border-bottom: 1px solid #e0e3e5;
+        }
+
+        .tt-day-section.today-section .tt-day-header {
+            background: #002045;
+            color: #fff;
+            border-bottom-color: #1960a3;
+        }
+
+        .tt-day-name {
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            font-size: 13px;
+        }
+
+        .tt-today-badge {
+            font-size: 10px;
+            font-weight: 700;
+            background: #d3e4ff;
+            color: #001c38;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .tt-day-section.today-section .tt-today-badge {
+            background: rgba(255,255,255,0.25);
+            color: #ffffff;
+        }
+
+        .tt-periods-list {
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #ffffff;
+        }
+
+        .tt-period-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #eceef0;
+            background: #fafafa;
+            transition: all 0.15s ease;
+        }
+
+        .tt-period-row:hover {
+            background: #f0f4ff;
+            border-color: #c5d5f5;
+        }
+
+        .tt-period-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #002045;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .tt-period-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tt-subject-name {
+            font-weight: 700;
+            font-size: 13px;
+            color: #191c1e;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tt-subject-code {
+            font-size: 10px;
+            color: #43474e;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 1px;
+        }
+
+        .tt-period-time {
+            font-size: 10px;
+            font-weight: 600;
+            color: #43474e;
+            text-align: right;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tt-free {
+            color: #aaa;
+            font-style: italic;
+            font-size: 12px;
+        }
+
+        .tt-subject-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .tt-no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: #43474e;
+        }
+
+        .tt-section-title {
+            font-family: 'Manrope', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #43474e;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         /* ───────────────────────────────────────────────────────────────── */
     </style>
 </head>
@@ -1025,12 +1196,13 @@
                 </div>
             </div>
             <div class="content">
-                <div class="tabs">
+                <div class="tabs" style="flex-wrap: wrap;">
                     <button class="tab active" onclick="showTab('today')">📊 Today</button>
                     <button class="tab" onclick="showTab('monthly')">📅 Monthly</button>
-                    <button class="tab" onclick="showTab('unitmarks')">📝 Unit Marks</button>
+                    <button class="tab" onclick="showTab('unitmarks')">📝 Marks</button>
+                    <button class="tab" onclick="showTab('timetable')">🕐 Timetable</button>
                     <button class="tab" onclick="showTab('pqp')">📚 PQP</button>
-                    <button class="tab" onclick="window.location.href='chat.html'" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); color: #002045; border: 1px solid #adc7f7;">🤖 AI Chat</button>
+                    <button class="tab" onclick="window.location.href='chat.html'" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); color: #002045; border: 1px solid #adc7f7;">🤖 AI</button>
                 </div>
 
                 <!-- Today's Attendance Tab (FIRST) -->
@@ -1142,7 +1314,25 @@
                     </div>
                 </div>
 
-                <!-- PQP Tab (FOURTH) -->
+                <!-- Timetable Tab (FOURTH) -->
+                <div id="timetableTab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: #002045; font-family: 'Manrope', sans-serif; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">🕐 Class Timetable</h3>
+                        <div id="ttSemBadge" style="font-size: 11px; font-weight: 600; background: #d3e4ff; color: #001c38; padding: 4px 10px; border-radius: 10px; display: none;"></div>
+                    </div>
+                    <div id="timetableLoading" style="text-align: center; padding: 40px; color: #43474e;">
+                        <div style="font-size: 32px; margin-bottom: 8px; animation: spin 2s linear infinite; display: inline-block;">⏳</div>
+                        <div style="font-weight: 600; font-size: 13px;">Loading timetable...</div>
+                    </div>
+                    <div id="timetableContent" style="display: none;"></div>
+                    <div id="timetableEmpty" style="display: none; text-align: center; padding: 40px 20px;">
+                        <div style="font-size: 44px; margin-bottom: 12px;">🗓️</div>
+                        <div style="font-size: 14px; font-weight: 700; color: #002045;">No timetable available</div>
+                        <div style="font-size: 12px; color: #43474e; margin-top: 6px;">The class timetable will appear here once the administrator uploads it.</div>
+                    </div>
+                </div>
+
+                <!-- PQP Tab (FIFTH) -->
                 <div id="pqpTab" class="tab-content">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="color: #002045; font-family: 'Manrope', sans-serif; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">📚 Previous Question Papers</h3>
@@ -1358,22 +1548,22 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
 
-            if (tab === 'today') {
-                document.querySelector('.tab:nth-child(1)').classList.add('active');
-                document.getElementById('todayTab').classList.add('active');
-                loadTodayAttendance();
-            } else if (tab === 'monthly') {
-                document.querySelector('.tab:nth-child(2)').classList.add('active');
-                document.getElementById('monthlyTab').classList.add('active');
-            } else if (tab === 'unitmarks') {
-                document.querySelector('.tab:nth-child(3)').classList.add('active');
-                document.getElementById('unitmarksTab').classList.add('active');
-                loadUnitMarks();
-            } else if (tab === 'pqp') {
-                document.querySelector('.tab:nth-child(4)').classList.add('active');
-                document.getElementById('pqpTab').classList.add('active');
-                loadStudentPQP();
-            }
+            const tabMap = {
+                today:     { idx: 1, id: 'todayTab' },
+                monthly:   { idx: 2, id: 'monthlyTab' },
+                unitmarks: { idx: 3, id: 'unitmarksTab' },
+                timetable: { idx: 4, id: 'timetableTab' },
+                pqp:       { idx: 5, id: 'pqpTab' }
+            };
+            const entry = tabMap[tab];
+            if (!entry) return;
+            document.querySelector(`.tab:nth-child(${entry.idx})`).classList.add('active');
+            document.getElementById(entry.id).classList.add('active');
+
+            if (tab === 'today')     loadTodayAttendance();
+            if (tab === 'unitmarks') loadUnitMarks();
+            if (tab === 'timetable') loadTimetable();
+            if (tab === 'pqp')       loadStudentPQP();
         }
 
         async function loadMonthlyReport() {
@@ -2127,6 +2317,144 @@
                 <div style="margin-top:18px;text-align:right;">
                     <button class="sn-btn-secondary" onclick="closeDetailModal()">Close</button>
                 </div>`;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+
+        // ═══════════════════════════════════════════════════════════════
+        //  CLASS TIMETABLE MODULE
+        // ═══════════════════════════════════════════════════════════════
+
+        // Colour palette for subjects (cycles through)
+        const TT_COLORS = [
+            { bg: '#e8f5e9', dot: '#2e7d32' },
+            { bg: '#e3f2fd', dot: '#1565c0' },
+            { bg: '#fff3e0', dot: '#e65100' },
+            { bg: '#fce4ec', dot: '#c62828' },
+            { bg: '#f3e5f5', dot: '#6a1b9a' },
+            { bg: '#e0f7fa', dot: '#006064' },
+            { bg: '#fffde7', dot: '#f57f17' },
+            { bg: '#fbe9e7', dot: '#bf360c' },
+        ];
+
+        // Standard period times for 7 periods
+        const TT_PERIOD_TIMES = [
+            '9:00 – 9:50',
+            '9:50 – 10:40',
+            '10:50 – 11:40',
+            '11:40 – 12:30',
+            '1:15 – 2:05',
+            '2:05 – 2:55',
+            '2:55 – 3:45'
+        ];
+
+        const TT_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        let _ttCache = null;       // cached timetable doc data
+        let _ttSubjectColorMap = {}; // subjectCode → color index
+
+        function _getTTColor(code) {
+            if (!code) return TT_COLORS[0];
+            if (_ttSubjectColorMap[code] === undefined) {
+                const idx = Object.keys(_ttSubjectColorMap).length % TT_COLORS.length;
+                _ttSubjectColorMap[code] = idx;
+            }
+            return TT_COLORS[_ttSubjectColorMap[code]];
+        }
+
+        async function loadTimetable() {
+            if (!currentStudent) return;
+
+            const loadEl   = document.getElementById('timetableLoading');
+            const contentEl= document.getElementById('timetableContent');
+            const emptyEl  = document.getElementById('timetableEmpty');
+            const badgeEl  = document.getElementById('ttSemBadge');
+
+            loadEl.style.display    = 'block';
+            contentEl.style.display = 'none';
+            emptyEl.style.display   = 'none';
+
+            try {
+                // Fetch from settings/timetable if not cached
+                if (!_ttCache) {
+                    const doc = await db.collection('settings').doc('timetable').get();
+                    _ttCache = doc.exists ? doc.data() : {};
+                }
+
+                const yearSem = currentStudent.yearSem || '';
+                const ttData  = _ttCache[yearSem]; // e.g. { Monday: [{subjectCode, subjectName, type}, ...x7], ... }
+
+                loadEl.style.display = 'none';
+
+                if (!ttData) {
+                    emptyEl.style.display = 'block';
+                    return;
+                }
+
+                // Show semester badge
+                const semLabels = { '1-1': 'Sem 1 (1st Year)', '2-3': 'Sem 3 (2nd Year)', '2-4': 'Sem 4 (2nd Year)', '3-5': 'Sem 5 (3rd Year)' };
+                badgeEl.textContent = semLabels[yearSem] || yearSem;
+                badgeEl.style.display = 'inline-block';
+
+                // Reset colour map for fresh render
+                _ttSubjectColorMap = {};
+
+                const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }); // e.g. "Tuesday"
+
+                let html = '';
+
+                TT_DAYS.forEach(day => {
+                    const isToday = (day === today);
+                    const periods = ttData[day] || []; // array of 7 period objects
+
+                    html += `<div class="tt-day-section${isToday ? ' today-section' : ''}">
+                        <div class="tt-day-header">
+                            <span class="tt-day-name">${isToday ? '📍 ' : ''}${day}</span>
+                            ${isToday ? '<span class="tt-today-badge">TODAY</span>' : ''}
+                        </div>
+                        <div class="tt-periods-list">`;
+
+                    for (let p = 0; p < 7; p++) {
+                        const period = periods[p] || null;
+                        const pNum  = p + 1;
+                        const pTime = TT_PERIOD_TIMES[p] || '';
+
+                        if (!period || !period.subjectCode) {
+                            html += `<div class="tt-period-row" style="opacity:0.45;">
+                                <div class="tt-period-num" style="background:#c4c6cf;">${pNum}</div>
+                                <div class="tt-period-info"><span class="tt-free">Free / Not Assigned</span></div>
+                                <div class="tt-period-time">${pTime}</div>
+                            </div>`;
+                        } else {
+                            const col = _getTTColor(period.subjectCode);
+                            const typeBadge = period.type === 'Lab'
+                                ? '<span style="font-size:9px;background:#002045;color:#fff;padding:1px 6px;border-radius:6px;margin-left:4px;">LAB</span>'
+                                : '';
+                            html += `<div class="tt-period-row" style="background:${col.bg};border-color:${col.dot}22;">
+                                <div class="tt-period-num" style="background:${col.dot};">${pNum}</div>
+                                <div class="tt-period-info">
+                                    <div class="tt-subject-name">${period.subjectName || period.subjectCode}${typeBadge}</div>
+                                    <div class="tt-subject-code">${period.subjectCode}</div>
+                                </div>
+                                <div class="tt-period-time">${pTime}</div>
+                            </div>`;
+                        }
+                    }
+
+                    html += `</div></div>`;
+                });
+
+                contentEl.innerHTML = html;
+                contentEl.style.display = 'block';
+
+            } catch (e) {
+                console.error('[Timetable] Error:', e);
+                loadEl.style.display = 'none';
+                emptyEl.innerHTML = `<div style="font-size:44px;margin-bottom:12px;">⚠️</div>
+                    <div style="font-size:14px;font-weight:700;color:#002045;">Could not load timetable</div>
+                    <div style="font-size:12px;color:#43474e;margin-top:6px;">Check your internet connection and try again.</div>`;
+                emptyEl.style.display = 'block';
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
